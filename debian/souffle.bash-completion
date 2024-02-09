@@ -1,0 +1,54 @@
+# Bash completions for souffle                   -*- shell-script -*-
+
+_souffle()
+{
+    local cur prev opts
+    _init_completion -s || return
+
+    case "$prev" in
+        --fact-dir|-F|--output-dir|-D|--include-dir)
+            _filedir -d
+            return
+            ;;
+        --generate|-g)
+            _filedir "cpp"
+            return
+            ;;
+        --dl-program|-o)
+            _filedir
+            return
+            ;;
+        --profile|-p)
+            _filedir "json|log"
+            return
+            ;;
+        --jobs|-j)
+            COMPREPLY=( $(compgen -W $(_ncpus) -- "$cur" ) )
+            return
+            ;;
+        --provenance|-t)
+            COMPREPLY=( $(compgen -W "none explain explore subtreeHeights" -- "$cur" ) )
+            return
+            ;;
+        --show)
+            COMPREPLY=( $(compgen -W "parse-errors precedence-graph scc-graphg transformed-datalog transformed-ram type-analysis" -- "$cur" ) )
+            return
+            ;;
+        --disable-transformers)
+            COMPREPLY=( $(compgen -W "AstComponentChecker AstExecutionPlanChecker AstPragmaChecker AstSemanticChecker AstUserDefinedFunctorsTransformer ComponentInstantiationTransformer FoldAnonymousRecords GroundedTermsChecker InlineRelationsTransformer MagicSetTransformer MaterializeAggregationQueriesTransformer MaterializeSingletonAggregationTransformer MetaTransformer MinimiseProgramTransformer NameUnnamedVariablesTransformer NormaliseConstraintsTransformer PartitionBodyLiteralsTransformer PolymorphicObjectsTransformer ProvenanceTransformer ReduceExistentialsTransformer RemoveBooleanConstraintsTransformer RemoveEmptyRelationsTransformer RemoveRedundantRelationsTransformer RemoveRedundantSumsTransformer RemoveRelationCopiesTransformer RemoveTypecastsTransformer ReorderLiteralsTransformer ReplaceSingletonVariablesTransformer ResolveAliasesTransformer ResolveAnonymousRecordAliases UniqueAggregationVariablesTransformer" -- "$cur" ) )
+            return
+            ;;
+    esac
+
+    COMPREPLY=()
+    opts="$(souffle --help|grep '^  '|sed 's/^.*\(--[a-zA-Z0-9_-][a-zA-Z0-9_-]*\).*$/\1/')"
+
+    if [[ ${cur} == -* ]] ; then
+        COMPREPLY=( $(compgen -W "${opts}" -- ${cur}) )
+        return
+    fi
+
+    _filedir dl
+
+} &&
+complete -F _souffle souffle

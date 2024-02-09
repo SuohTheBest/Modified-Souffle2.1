@@ -1,0 +1,106 @@
+.decl edge(src:number, dest:number)
+edge(src,dest) :- edge(dest,src).
+.input edge
+
+.decl node(id:number)
+node(id) :- edge(id,_).
+node(id) :- edge(_,id).
+
+.decl vertex(id:number, degree:number)
+vertex(src, degree) :- node(src),
+		       degree  = count : { edge(src,_) }.
+
+// sort vertices by degree
+.decl first(id:number, degree:number)
+.decl last(id:number, degree:number)
+.decl next_candidate(id1:number, degree1:number, id2:number, degree2:number)
+.decl next(id1:number, degree1:number, id2:number, degree2:number)
+
+// first vertex has no prev
+first(id,degree) :- vertex(id,degree), !next(_,_,id,degree).
+
+// last vertex has no next
+last(id,degree) :- vertex(id,degree), !next(id,degree,_,_).
+
+// next defined by minimum larger in lex-order
+next_candidate(id1,degree1,id2,degree2) :- vertex(id1,degree1),
+                     degree1 = degree2,
+                     id2 = min id : { vertex(id,degree), degree = degree1, id > id1 }.
+
+next(id1,degree1,id2,degree2) :- vertex(id1,degree1),
+                     degree2 = min degree3 : { vertex(_,degree3), degree3 > degree1 },
+                     id2 = min id3 : { vertex(id3,degree3), degree3 = degree2, id3 >= 0 },
+                     !next_candidate(id1,degree1,_,_).
+
+next(id1,degree1,id2,degree2) :- next_candidate(id1,degree1,id2,degree2).
+
+.decl vertex_array(index:number, id:number, degree:number)
+vertex_array(0,id,degree) :- first(id,degree).
+vertex_array(i+1,id2,degree2) :- vertex_array(i,id1,degree1), next(id1,degree1,id2,degree2).
+
+
+.decl size(x:number)
+size(count : { vertex_array(_,_,_) }).
+
+// for each vertex in the correct order
+// compute the order to consider its neighbours in
+// just consider the neighbours in the order they appear
+
+.decl vertex_next_neighbour(vertex_id:number, neighbour1_id:number, neighbour2_id:number)
+vertex_next_neighbour(vertex_id, neighbour1_id, neighbour2_id) :-
+	vertex(vertex_id,_),
+	edge(vertex_id, neighbour1_id),
+	neighbour2_id = min neighbour_id : { edge(vertex_id, neighbour_id), neighbour_id > neighbour1_id }.
+
+
+.decl vertex_last_neighbour(vertex_id:number, last_neighbour_id:number)
+vertex_last_neighbour(vertex_id, last_neighbour_id) :- edge(vertex_id, last_neighbour_id), !vertex_next_neighbour(vertex_id, last_neighbour_id,_).
+
+.decl vertex_first_neighbour(vertex_id:number, first_neighbour_id:number)
+vertex_first_neighbour(vertex_id, first_neighbour_id) :- edge(vertex_id, first_neighbour_id), !vertex_next_neighbour(vertex_id, _,first_neighbour_id).
+
+.decl neighbour_array(vertex_id:number, index:number, neighbour_id:number)
+neighbour_array(vertex_id, 0,  first_neighbour_id) :- vertex_first_neighbour(vertex_id, first_neighbour_id).
+neighbour_array(vertex_id, i+1,next_neighbour_id) :- neighbour_array(vertex_id, i, prev_neighbour_id), vertex_next_neighbour(vertex_id, prev_neighbour_id, next_neighbour_id).
+
+
+.decl gc_induction(vertex_index:number, neighbour_index:number, colors_used:unsigned, completed:number)
+
+// start with highest degree vertex on first neighbour
+gc_induction(n-1,0,0,0) :- size(n).
+
+
+
+// bitwise or the color of the neighbour
+gc_induction(n,m+1, c1 bor c2,0) :- gc_induction(n,m,c1,0),
+			          vertex_array(n,vertex_id,degree),
+				  m < degree,
+				  neighbour_array(vertex_id,m,neighbour_id),
+				  // if the neighbour index is larger then it must have been colored
+				  vertex_array(neighbour_index,neighbour_id,_),
+				  neighbour_index > n,
+				  color(neighbour_id, c2).
+.plan 1:(5,4,3,1,2)
+
+gc_induction(n,m+1, c1,0) :- gc_induction(n,m,c1,0),
+			          vertex_array(n,vertex_id,degree),
+				  m < degree,
+				  neighbour_array(vertex_id,m,neighbour_id),
+				  // if the neighbour index is smaller then it has no color
+				  vertex_array(neighbour_index,neighbour_id,_),
+				  neighbour_index < n.
+
+gc_induction(n,m,c,1) :- gc_induction(n,m,c,0), vertex_array(n,_,degree), m = degree.
+gc_induction(n-1,0,0,0) :- gc_induction(n,_,_,1), n > 0.
+
+
+.functor get_rightmost_unset_bit(unsigned):unsigned
+.functor log_wrapper(unsigned):unsigned
+
+.decl color(vertex_id:number, color:unsigned)
+color(vertex_id, color) :- gc_induction(n,_,c,1), vertex_array(n,vertex_id,_), color = @get_rightmost_unset_bit(c).
+
+
+.decl graph_coloring(vertex_id:number, color:unsigned)
+graph_coloring(vertex_id, @log_wrapper(color)) :- color(vertex_id, color), !color(_,0).
+.output graph_coloring

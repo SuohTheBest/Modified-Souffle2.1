@@ -1,0 +1,5 @@
+#pragma once
+
+namespace souffle {
+constexpr char const* PACKAGE_VERSION = "${PACKAGE_VERSION}";
+}

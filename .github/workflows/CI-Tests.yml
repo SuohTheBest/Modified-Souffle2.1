@@ -1,0 +1,139 @@
+name: CI-Tests
+on:
+  pull_request:
+    types: [opened, synchronize]
+  workflow_dispatch:
+
+jobs:
+  Code-Style:
+    runs-on: ubuntu-18.04
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 2
+
+    - name: clang-format
+      run: sh/run_test_format.sh
+
+  Ubuntu-CMake:
+    needs: Code-Style
+    timeout-minutes: 150
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        domain: [32bit, 64bit, 64bit-noomp]
+
+    runs-on: ${{ matrix.os }}
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+
+    - name: install-deps
+      run: sudo sh/setup/install_ubuntu_deps.sh
+
+    - name: setup-32bit-domain
+      if: ${{ matrix.domain == '32bit' }}
+      run: cmake -S . -B build
+
+    - name: setup-64bit-domain
+      if: ${{ matrix.domain == '64bit' }}
+      run: cmake -S . -B build -DSOUFFLE_DOMAIN_64BIT=ON
+
+    - name: setup-64bit-domain-noomp
+      if: ${{ matrix.domain == '64bit-noomp' }}
+      run: cmake -S . -B build -DSOUFFLE_DOMAIN_64BIT=ON -DSOUFFLE_USE_OPENMP=OFF
+
+    - name: make
+      run: cmake --build build -j6
+
+    - name: check
+      run: cd build && ctest --output-on-failure --progress -j
+
+  OSX-CMake:
+    needs: Code-Style
+    timeout-minutes: 150
+
+    runs-on: macos-latest
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+
+    - name: install-deps
+      run: sh/setup/install_macos_deps.sh
+
+    - name: setup-32bit-domain
+      run: cmake -S . -B build
+
+    - name: make
+      run: cmake --build build -j6
+
+    - name: check
+      run: cd build && ctest --output-on-failure --progress -j
+
+  Memory-Check:
+    needs: Code-Style
+    timeout-minutes: 150
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+
+    - name: install-deps
+      run: sudo sh/setup/install_ubuntu_deps.sh
+
+    - name: setup-with-memory-sanitizer
+      run: cmake -S . -B build -DSOUFFLE_SANITISE_MEMORY=ON -DSOUFFLE_TEST_EVALUATION=OFF
+
+    - name: make
+      run: cmake --build build -j6
+
+    - name: check
+      run: cd build && ctest --output-on-failure --progress -j
+
+
+  Code-Coverage:
+    needs: [Code-Style, Ubuntu-CMake, OSX-CMake, Memory-Check]
+    timeout-minutes: 150
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: checkout
+      uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - name: install-lcov
+      run: sudo apt-get update && sudo apt-get install lcov
+
+    - name: install-deps
+      run: sudo sh/setup/install_ubuntu_deps.sh
+
+    - name: setup-with-code-coverage-on
+      run: cmake -DSOUFFLE_CODE_COVERAGE=ON -S . -B ./build
+
+    - name: make
+      run: cmake --build build -j6
+
+    - name: check
+      run: cd build && ctest --output-on-failure --progress -j6
+
+    - name: create-coverage-report
+      run: lcov --capture --directory . --output-file coverage.info
+
+    - name: remove-system-files-from-coverage-report
+      run: lcov --remove coverage.info '/usr/*' --output-file coverage.info
+
+    - name: upload-coverage-report
+      uses: codecov/codecov-action@v2
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: coverage.info

@@ -1,0 +1,124 @@
+.TH SOUFFLE 1 2020-07-29
+
+.SH NAME
+.B souffle
+\- translator of declarative Datalog programs into the C++ language.
+
+
+.SH SYNOPSIS
+.B souffle
+[
+.I options
+]
+.I files
+[
+.I options
+]
+
+
+.SH DESCRIPTION
+Souffle is used as a domain-specific language for static program analysis over
+large code bases with millions of lines of code. Souffle aims to produce
+high-performance C++ code that can be compiled with the native compiler on the
+target machine.
+
+
+.SH OPTIONS
+.TP
+.B -c, --compile
+Compile and execute the datalog (translating to C++)
+.TP
+.B -D\fI<DIR>\fP, --output-dir=\fI<DIR>\fP
+Specify directory for output relations (if \fI<DIR>\fP is -, all output is written to stdout)
+.TP
+.B -F\fI<DIR>\fP, --fact-dir=\fI<DIR>\fP
+Specify directory for fact files
+.TP
+.B -g \fI<FILE>\fP, --generate=\fI<FILE>\fP
+Generate C++ source code from the given datalog file
+.TP
+.B -h, --help
+Show this help text
+.TP
+.B -I\fI<DIR>\fP, --include-dir=\fI<DIR>\fP
+Specify directory for include files
+.TP
+.B -j\fI<N>\fP, --jobs=\fI<N>\fP
+Run interpreter/compiler in parallel using N threads, N=auto for system default
+.TP
+.B -L\fI<DIR>\fP, --library-dir=\fI<DIR>\fP
+Specify directory for library files
+.TP
+.B -l\fI<LIBRARIES>\fP, --libraries=\fI<LIBRARIES>\fP
+Specify libraries to be included for user defined functors
+.TP
+.B --legacy
+Enable legacy mode, which supports less strict type analysis
+.TP
+.B --live-profile
+Enable live profiling
+.TP
+.B -M\fI<OPTIONS>\fP, --macro=\fI<OPTIONS>\fP
+Set macro definitions for the pre-processor
+.TP
+.B -m\fI<RELATIONS>\fP, --magic-transform=\fI<RELATIONS>\fP
+Enable magic set transformation changes on the given relations, use '*' for all
+.TP
+.B -o \fI<FILE>\fP, --dl-program=\fI<FILE>\fP
+Write executable program to \fI<FILE>\fP (without executing it)
+.TP
+.B -P\fI<OPTIONS>\fP, --pragma=\fI<OPTIONS>\fP
+Set pragma options
+.TP
+.B -p\fI<FILE>\fP, --profile=\fI<FILE>\fP
+Enable profiling and write profile data to \fI<FILE>\fP
+.TP
+.B --parse-errors
+Show parsing errors, if any, then exit
+.TP
+.B -r\fI<FILE>\fP, --debug-report=\fI<FILE>\fP
+Generate an HTML debug report and write it to \fI<FILE>\fP
+.TP
+.B -s \fI<LANG>\fP, --swig=\fI<LANG>\fP
+Generate SWIG interface for the specified language. Possible values for \fI<LANG>\fP are java and python
+.TP
+.B -t\fI<none|explain|explore|subtreeHeights>\fP, --provenance=\fI<none|explain|explore|subtreeHeights>\fP
+Enable provenance instrumentation and interaction
+.TP
+.B --show=\fI<option>\fP
+        parse-errors - errors generated in the parsing stage
+        transformed-datalog - datalog equivalent to the final, transformed, program
+        type-analysis - types deduced from the input datalog
+        precedence-graph - precedence graph for all rules and relations
+        scc-graph - scc graph for RAM execution
+        transformed-ram - the final RAM after all transformations are applied
+Print selected program information.
+.TP
+.B -u\fI<FILE>\fP, --profile-use=\fI<FILE>\fP
+Use profile log-file \fI<FILE>\fP for profile-guided optimisation
+.TP
+.B -v, --verbose
+Verbose output
+.TP
+.B --version
+Print version information
+.TP
+.B -w, --no-warn
+Disable warnings
+.TP
+.B -z\fI<TRANSFORMERS>\fP, --disable-transformers=\fI<TRANSFORMERS>\fP
+Disable the given transformer
+
+.SH EXAMPLES
+souffle program.dl
+.TP
+souffle -c program.dl -Ffacts -D- -j20
+
+.SH VERSION
+2.0.1
+
+.SH LICENSE
+Copyright (c) 2016 Oracle and/or its affiliates. All Rights reserved.
+
+.SH SEE ALSO
+\fBg++\fP(1),\fBmcpp\fP(1),\fBswig\fP(1)

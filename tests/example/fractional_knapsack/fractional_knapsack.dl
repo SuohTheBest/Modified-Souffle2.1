@@ -1,0 +1,67 @@
+// Souffle - A Datalog Compiler
+// Copyright (c) 2021, The Souffle Developers. All rights reserved
+// Licensed under the Universal Permissive License v 1.0 as shown at:
+// - https://opensource.org/licenses/UPL
+// - <souffle root>/licenses/SOUFFLE-UPL.txt
+
+.type Item=[x:float,y:float]
+.type List=[head:Item,amount:float,rest:List]
+
+.decl capacity(value:float)
+.input capacity
+
+.decl item(value:float, weight:float)
+.input item
+
+.decl item_ratio(ratio:float, value:float, weight:float)
+item_ratio(value/weight, value, weight) :- item(value, weight).
+
+.decl first(value:float, weight:float)
+
+.decl last(value:float, weight:float)
+
+.decl next(value1:float, weight1:float, value2:float, weight2:float)
+.decl next_candidate(value1:float, weight1:float, value2:float, weight2:float)
+
+// first item has no prev
+first(value,weight) :- item(value,weight), !next(_,_,value,weight).
+
+// last item has no next
+last(value,weight) :- item(value,weight), !next(value,weight,_,_).
+
+next_candidate(v1,w1,v2,w2) :- item_ratio(r1,v1,w1), w2 = min w : { item_ratio(r,_,w), r = r1, w > w1 }, item_ratio(r1,v2,w2).
+
+// next item in lexicographical ordering
+next(v1,w1,v2,w2) :- item_ratio(r1,v1,w1),
+		     r2 = min r : { item_ratio(r,_,_), r > r1 },
+		     w2 = min w : { item_ratio(r,_,w), r = r2, w >= 0 },
+	             item_ratio(r2,v2,w2), !next_candidate(v1,w1,_,_).
+
+next(v1,w1,v2,w2) :- next_candidate(v1,w1,v2,w2).
+
+
+.decl item_array(index:number, p:Item)
+item_array(0,[v,w]) :- first(v,w).
+item_array(i+1,[v2,w2]) :- item_array(i,[v1,w1]), next(v1,w1,v2,w2).
+
+
+.decl knapsack_iteration(knapsack:List, index:number, weight:float, value:float)
+knapsack_iteration(nil, count : item_array(_,_) - 1, cap, 0) :- capacity(cap).
+
+// skip over iteration if we have exhausted capacity
+knapsack_iteration(list, index-1, 0, value) :- knapsack_iteration(list, index, 0, value), index >= 0.
+
+// otherwise exhaust the item and decrement
+knapsack_iteration([[val,weight],amount,rest],index-1,remaining_cap, value+(val/weight)*amount) :-
+	knapsack_iteration(rest, index, cap, value),
+	item_array(index, [val,weight]),
+	index >= 0,
+	amount = min(cap,weight),
+	remaining_cap = cap - amount,
+	cap > 0.
+
+
+.decl fractional_knapsack(val:float)
+.output fractional_knapsack
+
+fractional_knapsack(val) :- knapsack_iteration(_,-1,_,val).

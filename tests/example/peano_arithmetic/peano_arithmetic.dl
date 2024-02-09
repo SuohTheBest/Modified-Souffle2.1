@@ -1,0 +1,110 @@
+// Souffle - A Datalog Compiler
+// Copyright (c) 2021, The Souffle Developers. All rights reserved
+// Licensed under the Universal Permissive License v 1.0 as shown at:
+// - https://opensource.org/licenses/UPL
+// - <souffle root>/licenses/SOUFFLE-UPL.txt
+
+// S-Expression
+// An S-Expression constitutes an arithmetic term in Peano's axiomtic
+// approach for numbers.
+.type SExpr = Zero {} |
+              Succ {arg:SExpr} |
+              Add {left:SExpr, right:SExpr} |
+              Mul {left:SExpr, right:SExpr}
+
+// Input expression(s)
+.decl A(x:SExpr)
+
+// this represents the expression 2 * (1 + 1)
+A($Mul($Succ($Succ($Zero)), $Add($Succ($Zero()),$Succ($Zero())))).
+
+// Represents the symmetric reflexive transitive closure of the
+// reduction relation usign an equivalence relation in Souffle.
+.decl S(e1:SExpr, e2:SExpr) eqrel
+
+// Populate input
+S(e, e) :-
+   A(e).
+
+// Deconstruct S-Expression into its sub-expressions and put
+// each sub-expression into its own class.
+
+// a <-*> a if s(a) in dom(S)
+S(a, a) :-
+   term = $Succ(a),
+   S(term, term).
+
+// a <-*> a, b <-*> b if a + b in dom(S)
+S(a, a), S(b, b) :-
+   term = $Add(a, b),
+   S(term, term).
+
+// a <-*> a, b <-*> b if a * b in dom(S)
+S(a, a), S(b, b) :-
+   term = $Mul(a, b),
+   S(term, term).
+
+// Peano's arithmetic axioms
+
+// a + 0 => a
+S(pattern, a) :-
+  pattern = $Add(a, $Zero()),
+  S(pattern, pattern).
+
+// a + s(b) => sa + b
+S(pattern, $Succ($Add(a, b))) :-
+  pattern = $Add(a, $Succ(b)),
+  S(pattern, pattern).
+
+// a * s(b) => a + (a * b)
+S(pattern, $Add(a, $Mul(a,b))) :-
+  pattern = $Mul(a, $Succ(b)),
+  S(pattern, pattern).
+
+// a * 0 => 0
+S(pattern, $Zero()) :-
+  pattern = $Mul(_a, $Zero()),
+  S(pattern, pattern).
+
+// Reconstruct S-Expression using natural numbers only
+// It is important to reconstruct with normalized sub-terms
+// only; otherwise we will have a non-terminating program.
+
+//  s(a) => s(a'), if a <-*> a' and a' is a number.
+S($Succ(ap), x) :-
+  S($Succ(a), x),
+  S(a, ap),
+  isNormalform(ap).
+
+// a + b => a' + b', if a <-*> a', a <-*> b', a' and b' are numbers.
+S($Add(ap,bp), x) :-
+  S($Add(a,b), x),
+  S(a, ap),
+  S(b, bp),
+  isNormalform(ap),
+  isNormalform(bp).
+
+//  a * b => a' * b', if a <-*> a', b <-*> b', a' and b' are numbers.
+S($Mul(na,nb), x) :-
+  S($Mul(a,b), x),
+  S(a, na),
+  S(b, nb),
+  isNormalform(na),
+  isNormalform(nb).
+
+// Set of all normalized terms in the domain of S
+.decl isNormalform(s:SExpr)
+isNormalform($Zero()).
+isNormalform($Succ(a)) :-
+  pattern = $Succ(a),
+  S(pattern, pattern),
+  isNormalform(a).
+
+// Retrieve output
+.decl Result(x:SExpr, y:SExpr)
+Result(x,y) :-
+   A(x),
+   S(x,y),
+   isNormalform(y).
+
+.output Result

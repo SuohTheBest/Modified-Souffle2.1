@@ -1,0 +1,131 @@
+// Souffle - A Datalog Compiler
+// Copyright (c) 2021, The Souffle Developers. All rights reserved
+// Licensed under the Universal Permissive License v 1.0 as shown at:
+// - https://opensource.org/licenses/UPL
+// - <souffle root>/licenses/SOUFFLE-UPL.txt
+
+.type Coordinate=[x:number, y:number]
+.type List=[head:Coordinate,rest:List]
+
+.decl point(x:number, y:number)
+.input point
+
+.decl first(x:number, y:number)
+.decl last(x:number, y:number)
+.decl next_candidate(x1:number, y1:number, x2:number, y2:number)
+.decl next(x1:number, y1:number, x2:number, y2:number)
+
+// first point has no prev
+first(x,y) :- point(x,y), !next(_,_,x,y).
+
+// last point has no next
+last(x,y) :- point(x,y), !next(x,y,_,_).
+
+// next defined by minimum larger in lex-order
+next_candidate(x1,y1,x2,y2) :- point(x1,y1),
+                     x2 = x1,
+                     y2 = min y : { point(x,y), x = x1, y > y1 }.
+
+next(x1,y1,x2,y2) :- point(x1,y1),
+                     x2 = min x3 : { point(x3,_), x3 > x1 },
+                     y2 = min y3 : { point(x3,y3), x3 = x2, y3 >= 0 },
+                     !next_candidate(x1,y1,_,_).
+
+next(x1,y1,x2,y2) :- next_candidate(x1,y1,x2,y2).
+
+.decl sorted_point_array(index:number, p:Coordinate)
+sorted_point_array(0,[x,y]) :- first(x,y).
+sorted_point_array(i+1,[x2,y2]) :- sorted_point_array(i,[x1,y1]), next(x1,y1,x2,y2).
+
+// now everything is sorted by x then y we build the upper/lower hulls
+.decl cross(a:Coordinate, b:Coordinate, o:Coordinate, value:number) inline
+cross([a0,a1],[b0,b1],[o0,o1],value) :- value = (a0 - o0) * (b1 - o1) - (a1 - o1) * (b0 - o0).
+
+.decl upper_hull(result:List, iteration:number, index:number, popped:number)
+upper_hull(nil, 0, end, 0) :- end = count : sorted_point_array(_,_) - 1.
+
+upper_hull([next, rest], n+1, i-1, 0) :-
+    upper_hull(rest, n, i, 1),
+    sorted_point_array(i, next).
+
+upper_hull(nil, n+1, i, 1) :-
+    upper_hull(nil, n, i, 0).
+
+upper_hull([first, nil], n+1, i, 1) :-
+    upper_hull([first, nil], n, i, 0).
+
+upper_hull([next, [first, nil]], n+1, i-1, 0) :-
+    upper_hull([first, nil], n, i, 1),
+    sorted_point_array(i, next).
+
+upper_hull([first, [second, rest]], n+1, i, 1) :-
+    upper_hull([first, [second, rest]], n, i, 0),
+    sorted_point_array(i, next),
+    cross(second, first, next, value),
+    value > 0.
+
+upper_hull([second, rest], n+1, i, 0) :-
+    upper_hull([first, [second, rest]], n, i, 0),
+    sorted_point_array(i, next),
+    cross(second, first, next, value),
+    value <= 0.
+
+.decl lower_hull(result:List, iteration:number, index:number, popped:number)
+
+lower_hull(nil, 0, 0, 0).
+
+lower_hull([next, rest], n+1, i+1, 0) :-
+    lower_hull(rest, n, i, 1),
+    sorted_point_array(i, next).
+
+lower_hull(nil, n+1, i, 1) :-
+    lower_hull(nil, n, i, 0).
+
+lower_hull([first, nil], n+1, i, 1) :-
+    lower_hull([first, nil], n, i, 0).
+
+lower_hull([next, [first, nil]], n+1, i+1, 0) :-
+    lower_hull([first, nil], n, i, 1),
+    sorted_point_array(i, next).
+
+lower_hull([first, [second, rest]], n+1, i, 1) :-
+    lower_hull([first, [second, rest]], n, i, 0),
+    sorted_point_array(i, next),
+    cross(second, first, next, value),
+    value > 0.
+
+lower_hull([second, rest], n+1, i, 0) :-
+    lower_hull([first, [second, rest]], n, i, 0),
+    sorted_point_array(i, next),
+    cross(second, first, next, value),
+    value <= 0.
+
+.decl to_hull(result:List, lower:List, upper:List)
+
+to_hull(nil, lower_rest, upper_rest) :-
+    n = count : sorted_point_array(_,_),
+    lower_hull([_, lower_rest], _, n, _),
+    upper_hull([_, upper_rest], _, -1, _).
+
+to_hull(back_lower, nil, upper) :-
+    to_hull(nil, lower, upper),
+    reversed(lower, back_lower).
+
+to_hull([upper_first,rest], nil, upper_rest) :-
+    to_hull(rest, nil, [upper_first, upper_rest]).
+
+.decl convex_hull(result:List)
+.output convex_hull
+
+convex_hull(result) :- to_hull(orig, nil, nil), reversed(orig, result).
+
+.decl reversed(orig:List, result:List)
+reversed(orig, result) :- reversed_intermediate(orig, result, nil).
+
+.decl reversed_intermediate(orig:List, result:List, remaining:List)
+reversed_intermediate(orig, nil, orig) :- to_reverse(orig).
+reversed_intermediate(orig, [first, x], rest) :- reversed_intermediate(orig, x, [first, rest]).
+
+.decl to_reverse(orig:List)
+to_reverse(orig) :- to_hull(nil, orig, _).
+to_reverse(orig) :- to_hull(orig, nil, nil).

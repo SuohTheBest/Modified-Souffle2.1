@@ -1,0 +1,231 @@
+souffle (2.1) UNRELEASED; urgency=low
+ 
+  * Choice domain (@XiaowenHu96)
+  * Proper treatment of escape codes in symbol constants (@lyxell)
+  * CSV output has rfc4180 flag for delimiters (@quentin)
+  * Fix UDF syntax (@TomasPuverle)
+  * Add no_magic/no_inline relational qualifiers (@sharon-wang)
+  * Retire $; replace by autoinc() (@b-scholz)
+  * Suppress file errors with -w flag (@b-scholz)
+  * Re-implementation of the ast-to-ram translator (@azreika)
+  * Added Cmake PORT support (@XiaowenHu96, @quentin
+  * GitHub Action (@XiaowenHu96, @quentin, @XiaowenHu96, @b-scholz, @lyxell,@quentin,@OlivierHamel)
+  * Debian Packaging and CodeCov support in GitHub Action/Cmake (@phao5814)
+  * Lock-free record/symbol tables (@quentin)
+  * Interpreter refactoring / fixing (@XiaowenHu96)
+  * Type Analysis Refactoring (@azreika, @tytus-metrycki)
+  * New SIPS strategy (@langston-berrett)
+  * Refactor AST & RAM & Provenance (@TomasPuverle, @b-scholz, @azreika)
+  * RAM Optimisation (@SamArch27)
+  * Multiple library flag (@mclements)
+  * Added “max-bound-delta” SIPS (@langston-barrett)
+  * General Fixes and improvements (@b-scholz, @csabahruska, @julienhenry, @langston-berrett, @mmcgr, @TomasPuverle, @quentin,@XiaowenHu96)
+  * Add fuzzing scripts with AFL and Radamsa (@langston-barrett)
+
+ -- Bernhard Scholz <Bernhard.Scholz@sydney.edu.au> Tue 17 Aug 2021 12:08:04 +1100
+
+souffle (2.0.2); urgency=low
+
+  * Fix OSX user library paths (mmcgr)
+  * Fix concurrent profling (mmcgr)
+  * Fix indirect index use (aeflores)
+  * Fix 'as' type conversion (darth-tytus)
+  * Fix output of hint statistics (azreika)
+  * Implement Record/ADT user-defined functors (darth-tytus)
+  * Optimise ADT encoding (darth-tytus)
+  * Added limitsize directive (b-scholz)
+  * Add heuristic-based clause reordering (azreika)
+  * Enhanced Magic Set transformation (azreika)
+  * Restructuring for readability and maintainability (b-scholz, mmcgr)
+
+ -- Martin McGrane <mmcgrane@it.usyd.edu.au>  Fri, 25 Sep 2020 11:10:35 +1000
+
+souffle (2.0.1); urgency=low
+  * Stop overmaterialising aggregate bodies (rdowavic)
+  * Parallelise aggregate computation (rdowavic)
+  * Add JSON IO (GaloisNeko)
+  * Extend program minimiser (azreika)
+  * Use greater precision for floating point output (mmcgr)
+  * Fix duplicated symbols with multiple souffle object files (luc-tielen)
+  * Fix multithreaded, interpreted, provenance (taipan-snake)
+  * Fix provenance constraint explanation (taipan-snake)
+  * Fix path detection for souffle tools (mmcgr)
+  * Fix output directory use (mmcgr)
+
+ -- Martin McGrane <mmcgrane@it.usyd.edu.au>  Wed, 29 Jul 2020 11:54:01 +1100
+
+souffle (2.0.0); urgency=low
+  * Added `--legacy` flag to allow use of legacy options (darth-tytus)
+  * Added `--show [...]` flag to show various extra bits of information for
+    debugging/optimising (lyndonhenry)
+  * Query interface for provenance (yuli6313)
+  * Removed MPI support (b-scholz)
+  * Removed bddbddb and logicblox converters (b-scholz)
+  * Removed checkpointed evaluation (b-scholz)
+  * Extended inlining support (azreika)
+  * Added AST debug output for final 'optimised datalog' (mmcgr)
+  * Added RAM debug output (b-scholz)
+  * Updated man pages (darth-tytus/mmcgr)
+  * Fixes for AST/RAM printing (mmcgr)
+  * More useful debug output (mmcgr)
+  * Much more useful debug output (ohamel-softwaresecure)
+  * Interpreted souffle performance improvements (XiaowenHu96)
+  * Improved version output (mmcgr)
+  * Added support for floats and unsigned ints (darth-tytus)
+  * Improved testing (yuli6313/mmcgr)
+  * Added support for Record I/O (darth-tytus)
+  * Simplified error and warning messages (mmcgr)
+  * Added bitshift operators (ohamel-softwaresecure)
+  * Added support for polymorphic constants (darth-tytus)
+  * Improved aggregate performance (rdowavic)
+  * Added support for `as(arg, type)` (darth-tytus)
+  * Extensive refactoring of AST, RAM, utilities, and other bits (b-scholz and
+    others)
+  * Improve Program Minimiser(azreika)
+  * Unrestricted number of columns per relation (before set to 64) (SamArch27)
+  * Generative functors (ohamel-softwaresecure)
+  * Refactor parser (ohamel-softwaresecure)
+  * Various bugfixes
+
+ -- Martin McGrane <mmcgrane@it.usyd.edu.au>  Thu, 11 Jun 2020 14:04:00 +1100
+
+souffle (1.7.1); urgency=low
+  * Enhance program minimiser (azreika)
+  * Fix re-ordering of conjunctive terms
+
+ -- Kostyantyn Vorobyov <k.a.vorobyov@gmail.com>  Wed, 04 Dec 2019 09:31:23 +1100
+
+souffle (1.7.0); urgency=low
+  * Rewrote Interpreter for enhanced performance (XiaowenHu96,HerbertJordan)
+  * Add SWIG interface (detljh,chadgavin,honghyw)
+  * Improved C++ interface and documentation (detljh,chadgavin,honghyw)
+  * C++ interface allows specification of thread count (mmcgr)
+  * Added RAM analysis to debug report (b-scholz)
+  * New provenance instrumentation storing subproof heights (ssallinger)
+  * Compiles with MSVC (brianfairservice)
+  * Provenance interface supports querying results (yuli6313)
+  * Removed mpi support
+  * C++17 used for synthesised code
+  * Performance enhancements
+  * Bug fixes
+
+ -- Kostyantyn Vorobyov <k.a.vorobyov@gmail.com>  Thu, 28 Nov 2019 13:34:20 +1100
+
+souffle (1.6.2); urgency=low
+  * Fix transformation of aggregates (b-scholz)
+
+ -- Kostyantyn Vorobyov <k.a.vorobyov@gmail.com>  Fri, 8 Aug 2019 16:44:31 +1100
+
+souffle (1.6.1); urgency=low
+  * Fix builds from GitHub source releases (mmcgr)
+
+ -- Kostyantyn Vorobyov <k.a.vorobyov@gmail.com>  Fri, 2 Aug 2019 13:30:33 +1100
+
+souffle (1.6.0); urgency=low
+  * Low Level Machine Interpreter for improved non-synthesised performance (XiaowenHu96,HerbertJordan)
+  * Provenance support for negation and equivalence relations (taipan-snake)
+  * New semantics for RAM (b-scholz)
+  * Stratified RAM Analysis interfaces (b-scholz)
+  * New RAM Transformations: expand/collapsing conditions of filters, hoisting
+    of conditions, index transformation to utilize index operations,
+    if-conversions (converting scans to existence operations if possible), Choice
+    conversion, hoisting aggregates, and parallelization (dcol97)
+  * Meta-transformers for RAM (sequence/loop/conditional) (b-scholz)
+  * Add RAM transform support to debug report (rdowavic)
+  * Enable complex aggregates (rdowavic)
+  * Memory use improvements (mmcgr)
+  * Allow input pipes for datalog (maweki)
+  * Allow arbitrary argument length formax/min/cat functors (azreika)
+  * AST optimisations (azreika)
+  * Add user-defined libraries for functors (mmcgr)
+  * Added -l parameter for functor libraries and -L for functor library paths (mmcgr)
+  * Added --interpreter[LVM|RAMI] parameter for interpreter choice (XiaowenHu96)
+  * Improved code documentation (dcol97)
+  * Refactoring for maintainability and readability (mmcgr)
+  * Performance enhancements
+  * Bug fixes
+
+ -- Kostyantyn Vorobyov <k.a.vorobyov@gmail.com>  Tue, 23 Jul 2019 11:40:23 +1100
+
+souffle (1.5.1); urgency=low
+  * Rewritten code generation (taipan-snake)
+  * Improved Provenance via generated data structures (taipan-snake)
+  * Profile cpu & memory usage (mmcgr)
+  * Enhanced profiler graphs (mmcgr)
+  * Productivity measures in profiler (mmcgr)
+  * General profiler enhancements (mmcgr)
+  * Added support for non-x86 platforms (mmcgr)
+  * Improve compilation speed (mmcgr)
+  * Bash autocompletion (mmcgr)
+  * Extended verbose mode (azreika/mmcgr)
+  * Reorder atoms to optimise evaluation speed (azreika)
+  * Profile-guided atom reordering (azreika)
+  * Various AST optimisations (azreika)
+  * User defined functors (b-scholz)
+  * Bug fixes
+
+ -- Kostyantyn Vorobyov <k.a.vorobyov@gmail.com>  Thu, 17 Jan 2019 09:40:23 +1100
+
+souffle (1.4.0); urgency=low
+  * improved parallel performance (HerbertJordan)
+  * improved operators hints in btree (HerbertJordan)
+  * extended progress logging in verbose mode (mmcgr)
+  * added to_string and to_number functors (b-scholz)
+  * live profiler (mmcgr)
+  * changed profile output format to json (mmcgr)
+  * profile output is less indeterminate (mmcgr)
+  * profiler tracks memory and cpu usage during execution (mmcgr)
+  * profiler tracks load/store times (mmcgr)
+  * multiple input directives (mmcgr)
+  * handle failed input less terminally (mmcgr)
+  * MPI engine (lyndonhenry)
+  * Bug fixes
+
+ -- Kostyantyn Vorobyov <k.a.vorobyov@gmail.com>  Thu, 24 May 2018 12:40:23 +1100
+
+souffle (1.3.0); urgency=low
+
+  * Added more feedback in verbose mode (azreika/mmcgr)
+  * Fixed and enhanced 64 bit domain support (mmcgr/cfallin)
+  * Improved debug report (azreika)
+  * Enhanced profiler (atom frequency, bug fixes) (mmcgr)
+  * Hashmap support (HerbertJordan,65linesofcode)
+  * Enhanced provenance tools (taipan-snake)
+  * Performance enhancements (azreika)
+  * Bug fixes (mmcgr, azreika)
+
+ -- Kostyantyn Vorobyov <k.a.vorobyov@gmail.com>  Thu, 24 May 2018 12:40:23 +1100
+
+souffle (1.2.0); urgency=low
+
+  * Interactive provenance browser (taipan-snake)
+  * Compilation to subprograms for separate execution (lyndonhenry)
+  * Magic Sets (azreika)
+  * Sum aggregator fixed
+  * gcc7 optimisations
+  * File IO optimisations
+  * Added pragmas to enable runtime options
+  * Various minor bug fixes and usability enhancements
+
+ -- Kostyantyn Vorobyov <k.a.vorobyov@gmail.com>  Wed, 29 Mar 2017 12:00:23 +1100
+
+souffle (1.1.0); urgency=low
+
+  * Configurable I/O System with more options and support for new language
+    extensions (mmcgr).
+  * Support of equivalence relation using union/find data-structures (pnappa)
+  * New profiling tool rewritten in C++ with HTML/Javascript output
+    (DominicRomanowski).
+  * Replacing the Boost C-prepocessor wave by mcpp (pnappa)
+  * Adding ternary functors (b-scholz)
+  * JNI interface (psubotic)
+  * Memory optimisations (lyndonhenry)
+  * Numerous bug fixes. 
+
+ -- Kostyantyn Vorobyov <k.a.vorobyov@gmail.com>  Wed, 29 Mar 2017 12:00:23 +1100
+
+souffle (1.0.0); urgency=low
+
+  * Initial release
+
+ -- Kostyantyn Vorobyov <k.a.vorobyov@gmail.com>  Mon, 21 Mar 2016 17:25:32 +0000

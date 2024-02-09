@@ -1,0 +1,106 @@
+name: Create Packages
+on: [release]
+
+jobs:
+  Package-Ubuntu-2104-64bit:
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+    steps:
+      # To use this repository's private action, check out the repository
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Package souffle
+        # Private action is stored in the following directory
+        uses: ./.github/actions/create-package/ubuntu/21.04/64bit/
+        with:
+          package_cloud_api_key: ${{ secrets.PACKAGECLOUD_TOKEN }}
+
+  Package-Ubuntu-2004-64bit:
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+    steps:
+      # To use this repository's private action, check out the repository
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Package souffle
+        # Private action is stored in the following directory
+        uses: ./.github/actions/create-package/ubuntu/20.04/64bit/
+        with:
+          package_cloud_api_key: ${{ secrets.PACKAGECLOUD_TOKEN }}
+
+  Package-Ubuntu-2010-64bit:
+    strategy:
+      fail-fast: false
+
+    runs-on: ubuntu-latest
+    steps:
+      # To use this repository's private action, check out the repository
+      - name: Checkout
+        uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      - name: Package souffle
+        # Private action is stored in the following directory
+        uses: ./.github/actions/create-package/ubuntu/20.10/64bit/
+        with:
+          package_cloud_api_key: ${{ secrets.PACKAGECLOUD_TOKEN }}
+
+
+#  Package-Fedora-34-64bit:
+#    strategy:
+#      fail-fast: false
+#
+#    runs-on: ubuntu-latest
+#    steps:
+#      # To use this repository's private action, check out the repository
+#      - name: Checkout
+#        uses: actions/checkout@v2
+#        with:
+#          fetch-depth: 0
+#      - name: Package souffle
+#        # Private action is stored in the following directory
+#        uses: ./.github/actions/create-package/fedora/34/64bit/
+#        with:
+#          package_cloud_api_key: ${{ secrets.PACKAGECLOUD_TOKEN }}
+
+#   Package-Ubuntu-1804-64bit:
+#     strategy:
+#       fail-fast: false
+#
+#     runs-on: ubuntu-latest
+#     steps:
+#       # to use this repository's private action, check out the repository
+#       - name: checkout
+#         uses: actions/checkout@v2
+#
+#       - name: package souffle
+#         # private action is stored in the following directory
+#         uses: ./.github/actions/create-package/ubuntu/18.04/64bit/
+#         with:
+#           package_cloud_api_key: ${{ secrets.packagecloud_token }}
+#
+#   Package-Ubuntu-1804-32bit:
+#     strategy:
+#       fail-fast: false
+#
+#     runs-on: ubuntu-latest
+#     steps:
+#       # to use this repository's private action, check out the repository
+#       - name: checkout
+#         uses: actions/checkout@v2
+#
+#       - name: package souffle
+#         # private action is stored in the following directory
+#         uses: ./.github/actions/create-package/ubuntu/18.04/32bit/
+#         with:
+#           package_cloud_api_key: ${{ secrets.packagecloud_token }}
+#
+#

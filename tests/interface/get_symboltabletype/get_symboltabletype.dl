@@ -1,0 +1,8 @@
+.type first_name <: symbol
+.type last_name <: symbol
+.type gender <: symbol
+
+.decl people (Surname:first_name, name:last_name, gender:gender, age:number, height:float)
+
+.input people ()
+.output people ()

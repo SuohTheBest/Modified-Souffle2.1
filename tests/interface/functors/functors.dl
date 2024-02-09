@@ -1,0 +1,100 @@
+// Souffle - A Datalog Compiler
+// Copyright (c) 2019, The Souffle Developers. All rights reserved
+// Licensed under the Universal Permissive License v 1.0 as shown at:
+// - https://opensource.org/licenses/UPL
+// - <souffle root>/licenses/SOUFFLE-UPL.txt
+
+.functor foo(number, symbol):number
+.functor goo(symbol, number):number
+.functor hoo():symbol
+.functor ioo(number):symbol
+
+.functor factorial(unsigned):unsigned
+.functor rnd(float):number
+.functor incr(float):float
+
+.decl A(x:number)
+A(@foo(1,"123")) :- true.
+A(@goo("1234",2)) :- true.
+
+.output A
+
+.decl InlineRel(x:number) inline
+InlineRel(1) :- 1 < 5.
+
+
+.decl B(x:symbol)
+B(@hoo()) :- true.
+
+// Test functor use with inlined relations
+B(@ioo(x)) :- InlineRel(x), InlineRel((@foo(x, @ioo(x)))).
+
+.output B
+
+// Test functor use within a subloop
+.decl C(x:number)
+C(r) :- r = @foo(x, y), A(x), B(y).
+.output C
+
+
+
+// Test float and unsigned
+
+.decl F(x:unsigned)
+F(@factorial(3u)) :- true.
+F(@factorial(5u)) :- true.
+F(@factorial(10u)) :- true.
+.output F
+
+.decl R(i:number)
+R(@rnd(-12.35)) :- true.
+R(@rnd(-1.1231)) :- true.
+R(@rnd(0.7)) :- true.
+R(@rnd(0.2)) :- true.
+.output R
+
+.decl I(i:float)
+I(@incr(-1)) :- true.
+I(@incr(-2)) :- true.
+I(@incr(0)) :- true.
+I(@incr(1)) :- true.
+.output I
+
+// Testing stateful functors
+
+// Testing symbol table
+
+.functor mycat(symbol, symbol):symbol stateful
+.decl S(x:symbol)
+S(@mycat("A","B")) :- true.
+.output S
+
+
+// Testing record table
+.functor myappend(List):List stateful
+
+.type List = [x:number, y:List]
+.decl L(x:List)
+L([1,nil]).
+L(@myappend(l)) :- L(l), l = [x, _l1], x < 10.
+.output L
+
+// Testing ADTS
+.type MyADT = A { x : number }
+            | B { x : symbol }
+
+.functor my_to_number_fun(val: MyADT): number stateful
+.functor my_identity(val: MyADT): MyADT stateful
+
+.decl gen_adt(val: MyADT)
+.decl my_to_number(val: number)
+.decl identity(val: MyADT)
+
+gen_adt($A(1234)).
+gen_adt($B("5678")).
+
+my_to_number(@my_to_number_fun(v)) :- gen_adt(v).
+
+identity(@my_identity(v)) :- gen_adt(v).
+
+.output my_to_number, identity

@@ -1,0 +1,121 @@
+// Souffle - A Datalog Compiler
+// Copyright (c) 2021, The Souffle Developers. All rights reserved
+// Licensed under the Universal Permissive License v 1.0 as shown at:
+// - https://opensource.org/licenses/UPL
+// - <souffle root>/licenses/SOUFFLE-UPL.txt
+
+#define FALSE 0
+#define TRUE 1
+
+.decl graph(x:symbol, y:symbol, w:number)
+.input graph()
+
+.decl node(node_id:symbol)
+node(x) :- graph(x,_,_) ; graph(_,x,_).
+
+.decl edge(id:number, x:symbol, y:symbol, w:number)
+edge($,x,y,w) :- graph(x,y,w).
+
+.decl edgePosition(id:number, pos:number)
+edgePosition(id,0) :- edgeFirst(id).
+edgePosition(id2,i+1) :- edgePosition(id1,i), edgeNext(id1,id2).
+
+.decl edgeFirst(id1:number)
+edgeFirst(id1) :- edge(id1,_,_,_), !edgeNext(_,id1).
+
+.decl edgeNextCandidate(id1:number, id2:number)
+edgeNextCandidate(id1, id2) :-
+    edge(id1, _, _, w1),
+    id2 = min id : { edge(id, _, _, w), w = w1, id > id1 }.
+
+.decl edgeNext(id1:number, id2:number)
+edgeNext(id1, id2) :-
+    edge(id1, _, _, w1),
+    w2 = min w : { edge(_, _, _, w), w > w1 },
+    id2 = min id : { edge(id, _, _, w), w = w2 },
+    !edgeNextCandidate(id1,_).
+
+edgeNext(id1,id2) :- edgeNextCandidate(id1,id2).
+
+.decl startNode(node_id: symbol)
+startNode(node_id) :- edge(0, node_id, _, _).
+
+.decl validStep(step:number)
+validStep(0).
+validStep(step+1) :- validStep(step), step < count : node(_).
+
+.decl addedNode(step:number, node_id:symbol)
+addedNode(0, start) :- startNode(start).
+addedNode(step+1, node_id) :-
+    validStep(step+1),
+    (addedNode(step, node_id) ; chosenNode(step, node_id)).
+
+.decl unaddedNode(step:number, node_id:symbol)
+unaddedNode(0, node_id) :- node(node_id), !startNode(node_id).
+unaddedNode(prev_step+1, node_id) :-
+    unaddedNode(prev_step, node_id),
+    chosenEdge(prev_step, new_edge_id),
+    edge(new_edge_id, _, y, _),
+    node_id != y.
+
+.decl validEdge(step:number, edge_id: number)
+validEdge(step, edge_id) :-
+    reachableEdge(step, edge_id),
+    edge(edge_id, _, node_id, _),
+    unaddedNode(step, node_id),
+    unusedEdge(step, edge_id).
+
+.decl reachableEdge(step:number, edge_id:number)
+reachableEdge(step, edge_id) :-
+    addedNode(step, node_id),
+    edge(edge_id, node_id, _, _).
+
+.decl unusedEdge(step:number, edge_id:number)
+unusedEdge(0, edge_id) :- edge(edge_id,_,_,_).
+unusedEdge(prev_step+1, edge_id) :-
+    unusedEdge(prev_step, edge_id),
+    chosenEdge(prev_step, new_edge_id),
+    new_edge_id != edge_id.
+
+.decl notValidEdge(step:number, edge_id:number)
+notValidEdge(step, edge_id) :-
+    validStep(step),
+    chosenEdge(prev_step, edge_id),
+    prev_step < step.
+notValidEdge(step, edge_id) :-
+    unaddedNode(step, node_id),
+    edge(edge_id, node_id, _, _).
+notValidEdge(step, edge_id) :-
+    addedNode(step, node_id),
+    edge(edge_id, _, node_id, _).
+
+.decl chosenEdge(step:number, edge_id:number)
+chosenEdge(step, edge_id) :-
+    chosenEdgeInductive(step, edge_position, TRUE),
+    edgePosition(edge_id, edge_position).
+
+.decl chosenEdgeInductive(step:number, edge_position:number, is_chosen:number)
+
+chosenEdgeInductive(step, -1, FALSE) :- validStep(step).
+
+chosenEdgeInductive(step, cur_edge_pos, is_chosen) :-
+    chosenEdgeInductive(step, prev_edge_pos, FALSE),
+    edgePosition(edge_id, cur_edge_pos),
+    cur_edge_pos = prev_edge_pos + 1,
+    ((validEdge(step, edge_id), is_chosen = TRUE) ;
+     (notValidEdge(step, edge_id), is_chosen = FALSE)).
+
+.decl chosenNode(step:number, node_id:symbol)
+chosenNode(step, node_id) :-
+    chosenEdge(step, edge_id),
+    edge(edge_id, _, node_id, _).
+
+.decl prims_trace(step:number, edge_id:number, x:symbol, y:symbol, w:number)
+prims_trace(step, edge_id, x, y, w) :-
+    chosenEdge(step, edge_id),
+    edge(edge_id, x, y, w).
+
+.decl minimum_spanning_tree(c:number)
+minimum_spanning_tree(sum w : { prims_trace(_,_,_,_,w) }).
+
+.output minimum_spanning_tree

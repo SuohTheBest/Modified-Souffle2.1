@@ -1,0 +1,13 @@
+
+.type Word <: symbol
+
+.decl words (i:number, w:Word)
+.decl bigram (w:Word, w1:Word)
+
+.input words
+
+bigram(w, w1) :-
+   words(i,w),
+   words(i+1,w1).
+
+.output bigram
