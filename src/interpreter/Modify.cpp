@@ -13,6 +13,7 @@
 #define INFO_ORDER 9
 #define SCAN_TARGET 10
 #define END_SCAN 11
+#define OUTPUT 12
 
 int countSubstringOccurrences(const std::string& str, const std::string& sub) {
     int count = 0;
@@ -66,6 +67,8 @@ int getOperationType(const std::string& operation) {
         return SCAN_TARGET;
     else if (operation == "END_SCAN")
         return END_SCAN;
+    else if (operation == "OUTPUT")
+        return OUTPUT;
     else
         return INT8_MAX;
 }
@@ -189,6 +192,10 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
             std::vector<size_t> tuple = stringToTuple(tuple_str);
             decodeTupleByOrder(tuple, order_manager->get_order(viewId));
             scan_manager->scan_tuple(decodeTupleWithAssignedData(tuple));
+            break;
+        }
+        case OUTPUT: {
+            (*os) << "output_set:" << data << std::endl;
             break;
         }
         default: break;

@@ -1226,6 +1226,8 @@ RamDomain Engine::execute(const Node* node, Context& ctxt) {
                 return true;
             } else if (op == "output" || op == "printsize") {
                 try {
+                    (*analyzer)<<"OUTPUT"<<rel.getName();
+                    analyzer->parse();
                     IOSystem::getInstance()
                             .getWriter(directive, getSymbolTable(), getRecordTable())
                             ->writeAll(rel);
