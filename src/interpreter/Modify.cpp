@@ -195,7 +195,7 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
             break;
         }
         case OUTPUT: {
-            (*os) << "output_set:" << data << std::endl;
+            (*os) << "output set:" << data << std::endl;
             break;
         }
         default: break;
