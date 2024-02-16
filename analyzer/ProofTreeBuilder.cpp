@@ -1,12 +1,12 @@
 #include "ProofTreeBuilder.h"
 
+
 bool modified_souffle::proofTreeBuilder::readALine() {
 	std::string line;
 	if (!std::getline(is, line)) return false;
 	if (line[0] == '+')  // 向集合中添加tuple
 	{
 		std::sregex_iterator end;
-		std::regex tuple_pattern(R"(\([\w,]*\))");
 		std::smatch matches;
 		std::string tuple;
 		if (!is_relation)  // 是叶子节点
@@ -20,13 +20,13 @@ bool modified_souffle::proofTreeBuilder::readALine() {
 			curr_tupleId++;
 		} else {  // 非叶子节点，要加载父节点数据
 			std::sregex_iterator iterator(line.begin(), line.end(), tuple_pattern);
-			assert(iterator != end);
+			assert(iterator != end && "tuple正则表达式没有匹配到数据");
 			matches = *iterator++;
 			tuple = matches.str() + "@" + curr_setName;
 			// 解析规则中的set
-			std::regex set_pattern(R"(\s(\w*?)(?=\())");
 			std::smatch set_matches;
 			std::sregex_iterator set_iterator(curr_relation.begin(), curr_relation.end(), set_pattern);
+			assert(set_iterator != end && "set正则表达式没有匹配到数据");
 			std::vector<std::string> set_list;
 			while (set_iterator != end) {
 				set_matches = *set_iterator++;
@@ -39,13 +39,16 @@ bool modified_souffle::proofTreeBuilder::readALine() {
 				matches = *iterator++;
 				tuple = matches.str() + "@" + set_list[i].substr(1);
 				auto it = tuple_map.find(tuple);
-				assert(it != tuple_map.end());
+				// 从文件中读取的tuple在output中不方便记录，需要手动添加
+				if (it == tuple_map.end()) {
+					tuple_list.push_back(new Tuple(true, tuple));
+					it = tuple_map.insert({tuple, curr_tupleId++}).first;
+				}
 				tuple1->parent_node[i] = it->second;
 				i++;
 			}
 			tuple_list.push_back(tuple1);
-			tuple_map[tuple1->name] = curr_tupleId;
-			curr_tupleId++;
+			tuple_map[tuple1->name] = curr_tupleId++;
 		}
 		return true;
 	}

@@ -21,11 +21,10 @@ namespace modified_souffle {
 		size_t size;
 		size_t *parent_node;
 		bool is_root;  // 通过input创造的tuple没有父节点
-		Tuple() = default;
 
 		Tuple(bool is_root, std::string &name)
 				:
-				name(name), parent_node(nullptr), is_root(is_root) {};
+				name(name), parent_node(nullptr), is_root(is_root), rule_id(0), size(0) {};
 
 		Tuple(bool is_root, std::string &name, size_t relation_id, size_t size)
 				:
@@ -42,9 +41,8 @@ namespace modified_souffle {
 		std::string name;
 		size_t pr;
 		size_t fr;
-		RelationCount() = default;
 
-		RelationCount(std::string &relation) :
+		explicit RelationCount(std::string &relation) :
 				name(relation), pr(0), fr(0) {};
 	};
 
@@ -54,6 +52,7 @@ namespace modified_souffle {
 			this->path = path;
 			extract();
 		}
+
 		/** 提取的正确tuple */
 		std::unordered_set<std::string> tuple_list;
 
@@ -71,6 +70,8 @@ namespace modified_souffle {
 	public:
 		proofTreeBuilder(const char *path) {
 			is.open(path);
+			set_pattern.assign((R"(\s(\w*?)(?=\())"));
+			tuple_pattern.assign((R"(\([\w,"]*\))"));
 			build();
 		}
 
@@ -90,13 +91,14 @@ namespace modified_souffle {
 		bool is_relation = false;
 		size_t curr_tupleId = 0;
 		/** tuple要被添加到的set */
-		std::string curr_setName = "";
+		std::string curr_setName;
 		/** 当前正在应用的规则 */
-		std::string curr_relation = "";
+		std::string curr_relation;
 		size_t curr_relationId = 0;
-
 		std::unordered_map<std::string, size_t> tuple_map;
 		std::unordered_map<std::string, size_t> relation_map;
+		std::regex set_pattern;
+		std::regex tuple_pattern;
 		std::ifstream is;
 	};
 }  // namespace modified_souffle

@@ -176,7 +176,7 @@ Engine::Engine(ram::TranslationUnit& tUnit, const std::string& analyzer_output_p
           numOfThreads(number_of_threads(std::stoi(Global::config().get("jobs")))), tUnit(tUnit),
           isa(tUnit.getAnalysis<ram::analysis::IndexAnalysis>()), recordTable(numOfThreads),
           symbolTable(numOfThreads) {
-    this->analyzer = new modified_souffle::TupleDataAnalyzer(analyzer_output_path);
+    this->analyzer = new modified_souffle::TupleDataAnalyzer(analyzer_output_path,&symbolTable);
 }
 
 Engine::RelationHandle& Engine::getRelationHandle(const std::size_t idx) {
@@ -1779,9 +1779,6 @@ RamDomain Engine::evalInsert(Rel& rel, const Insert& shadow, Context& ctxt) {
     /* Generic */
     for (const auto& expr : superInfo.exprFirst) {
         tuple[expr.first] = execute(expr.second.get(), ctxt);
-        (*analyzer) << "ASSIGN " << tuple[expr.first] << "=" << getSymbolTable().decode(tuple[expr.first])
-                    << std::endl;
-        (*analyzer).parse();
     }
     (*analyzer) << "INSERT tuple:" << modified_souffle::tupleToString(tuple) << std::endl;
     (*analyzer).parse();

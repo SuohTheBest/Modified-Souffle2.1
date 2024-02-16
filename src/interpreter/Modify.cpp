@@ -1,19 +1,21 @@
 #include "Modify.h"
 #include "fstream"
 
-#define DEBUG 0
-#define INSERT_TARGET 1
-#define INSERT 2
-#define ASSIGN 3
-#define SWAP 4
-#define CLEAR 5
-#define SCAN_EVAL 6
-#define SCAN_INDEX 7
-#define SCAN_ORDER 8
-#define INFO_ORDER 9
-#define SCAN_TARGET 10
-#define END_SCAN 11
-#define OUTPUT 12
+enum class opType {
+    debug,
+    insert_target,
+    insert,
+    swap,
+    clear,
+    scan_eval,
+    scan_index,
+    scan_order,
+    info_order,
+    scan_target,
+    end_scan,
+    output,
+    other,
+};
 
 int countSubstringOccurrences(const std::string& str, const std::string& sub) {
     int count = 0;
@@ -42,47 +44,46 @@ std::vector<size_t> stringToTuple(const std::string& str) {
     return tuple;
 }
 
-int getOperationType(const std::string& operation) {
+opType getOperationType(const std::string& operation) {
     if (operation == "DEBUG")
-        return DEBUG;
+        return opType::debug;
     else if (operation == "INSERT_TARGET")
-        return INSERT_TARGET;
+        return opType::insert_target;
     else if (operation == "INSERT")
-        return INSERT;
-    else if (operation == "ASSIGN")
-        return ASSIGN;
+        return opType::insert;
     else if (operation == "SWAP")
-        return SWAP;
+        return opType::swap;
     else if (operation == "CLEAR")
-        return CLEAR;
+        return opType::clear;
     else if (operation == "SCAN_EVAL")
-        return SCAN_EVAL;
+        return opType::scan_eval;
     else if (operation == "SCAN_INDEX")
-        return SCAN_INDEX;
+        return opType::scan_index;
     else if (operation == "SCAN_ORDER")
-        return SCAN_ORDER;
+        return opType::scan_order;
     else if (operation == "INFO_ORDER")
-        return INFO_ORDER;
+        return opType::info_order;
     else if (operation == "SCAN_TARGET")
-        return SCAN_TARGET;
+        return opType::scan_target;
     else if (operation == "END_SCAN")
-        return END_SCAN;
+        return opType::end_scan;
     else if (operation == "OUTPUT")
-        return OUTPUT;
+        return opType::output;
     else
-        return INT8_MAX;
+        return opType::other;
 }
 
 bool modified_souffle::TupleDataAnalyzer::parse() {
     std::string line;
     if (!std::getline(tuple_data, line)) return false;
     // (*os) << "###" << line << std::endl;
-    int split_pos = line.find(' ');
+    std::cout<<line<<std::endl;
+    size_t split_pos = line.find(' ');
     std::string operation = line.substr(0, split_pos);
     std::string data(line.begin() + split_pos + 1, line.end() - 1);
-    int type = getOperationType(operation);
+    opType type = getOperationType(operation);
     switch (type) {
-        case DEBUG: {
+        case opType::debug: {
             if (set.counter != 0) {
                 set.show(*os);
                 set.clear();
@@ -100,13 +101,13 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
                 (*os) << "read input:" << data << std::endl;
             break;
         }
-        case INSERT_TARGET: {
+        case opType::insert_target: {
             curr_insertSet = data;
             break;
         }
-        case INSERT: {
+        case opType::insert: {
             if (curr_insertSet.empty() || is_skip_loop) break;
-            int op_pos = data.find(":");
+            size_t op_pos = data.find(':');
             std::string tuple = data.substr(op_pos + 2);
             if (is_relation) {
                 std::string detail = scan_manager->read_tuple();
@@ -122,22 +123,8 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
                 set.insert_tuple(curr_insertSet, decodeTupleWithAssignedData(tuple), "");
             break;
         }
-        case ASSIGN: {
-            try {
-                int op_pos = data.find("=");
-                size_t number = std::stoi(data.substr(0, op_pos));
-                if (number >= assign_data.size()) {
-                    assign_data.resize(2 * number + 1);
-                }
-                assign_data[number] = data.substr(op_pos + 2);
-            } catch (const std::exception& e) {
-                std::cerr << "处理赋值语句时发生错误." << std::endl;
-                std::cerr << e.what();
-            }
-            break;
-        }
-        case SWAP: {
-            int op_pos = data.find(' ');
+        case opType::swap: {
+            size_t op_pos = data.find(' ');
             std::string set1 = data.substr(0, op_pos);
             std::string set2 = data.substr(op_pos + 1);
             if (set1[0] == '@' && set2[0] == '@')
@@ -147,7 +134,7 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
             }
             break;
         }
-        case CLEAR: {
+        case opType::clear: {
             if (data.empty() || data[0] == '@')
                 break;
             else {
@@ -155,19 +142,19 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
             }
             break;
         }
-        case SCAN_ORDER: {
+        case opType::scan_order: {
             curr_order.clear();
             curr_order = stringToTuple(data);
             break;
         }
-        case SCAN_EVAL: {
+        case opType::scan_eval: {
             std::vector<size_t> tuple = stringToTuple(data);
             decodeTupleByOrder(tuple, curr_order);
             scan_manager->scan_tuple(decodeTupleWithAssignedData(tuple));
             break;
         }
-        case INFO_ORDER: {
-            int op_pos = data.find(' ');
+        case opType::info_order: {
+            size_t op_pos = data.find(' ');
             std::string sub1 = data.substr(0, op_pos);
             std::string sub2 = data.substr(op_pos + 1);
             size_t viewId = stoi(sub1);
@@ -175,18 +162,18 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
             order_manager->add_order(viewId, order);
             break;
         }
-        case SCAN_TARGET: {
+        case opType::scan_target: {
             scan_manager->enter_loop();
             curr_scanSet = data;
             break;
         }
-        case END_SCAN: {
+        case opType::end_scan: {
             scan_manager->exit_loop();
             is_skip_loop = false;
             break;
         }
-        case SCAN_INDEX: {
-            int op_pos = data.find(' ');
+        case opType::scan_index: {
+            size_t op_pos = data.find(' ');
             size_t viewId = stoi(data.substr(0, op_pos));
             std::string tuple_str = data.substr(op_pos + 1);
             std::vector<size_t> tuple = stringToTuple(tuple_str);
@@ -194,7 +181,7 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
             scan_manager->scan_tuple(decodeTupleWithAssignedData(tuple));
             break;
         }
-        case OUTPUT: {
+        case opType::output: {
             (*os) << "output set:" << data << std::endl;
             break;
         }
@@ -210,7 +197,7 @@ std::string modified_souffle::TupleDataAnalyzer::decodeTupleWithAssignedData(con
     while (std::getline(ss, token, ',')) {
         try {
             size_t number = std::stoi(token);
-            token = assign_data[number];
+            token = symbolTable->decode(number);
             ans = ans + token + ",";
         } catch (const std::exception& e) {
             std::cerr << "将赋值应用在tuple上时发生错误.";
@@ -256,18 +243,21 @@ void modified_souffle::TupleDataAnalyzer::decodeTupleByOrder(
 std::string modified_souffle::TupleDataAnalyzer::decodeTupleWithAssignedData(std::vector<size_t>& tuple) {
     std::string ans = "(";
     for (unsigned long i : tuple) {
-        ans = ans + assign_data[i] + ",";
+        ans = ans + symbolTable->decode(i) + ",";
     }
     *(ans.end() - 1) = ')';
     return ans;
 }
 
-modified_souffle::TupleDataAnalyzer::TupleDataAnalyzer(std::ostream& os) {
+modified_souffle::TupleDataAnalyzer::TupleDataAnalyzer(souffle::SymbolTable* symbolTable, std::ostream& os) {
     this->os = &os;
+    this->symbolTable = symbolTable;
 }
 
-modified_souffle::TupleDataAnalyzer::TupleDataAnalyzer(const std::string& output_path) {
-    if (output_path == "")
+modified_souffle::TupleDataAnalyzer::TupleDataAnalyzer(
+        const std::string& output_path, souffle::SymbolTable* symbolTable) {
+    this->symbolTable = symbolTable;
+    if (output_path.empty())
         this->os = &std::cout;
     else
         this->os = new std::ofstream(output_path);
@@ -277,7 +267,7 @@ void modified_souffle::set_data::insert_tuple(
         const std::string& target_set, const std::string& tuple, const std::string& detail) {
     auto it = set_index.find(target_set);
     if (it != set_index.end()) {
-        int index = it->second;
+        size_t index = it->second;
         set[index].push_back(tuple);
         detail_data[index].push_back(detail);
     } else {

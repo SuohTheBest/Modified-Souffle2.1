@@ -9,6 +9,7 @@
 #include "string"
 #include "vector"
 #include <map>
+#include "souffle/SymbolTable.h"
 
 namespace modified_souffle {
 
@@ -42,7 +43,7 @@ public:
 
 private:
     size_t counter = 0;
-    std::map<std::string, int> set_index;
+    std::map<std::string, size_t> set_index;
     std::vector<std::vector<std::string>> set;
     std::vector<std::vector<std::string>> detail_data;
 };
@@ -52,7 +53,7 @@ private:
  */
 class TupleScanManager {
 public:
-    TupleScanManager(int depth) : max_loop_depth(depth) {
+    explicit TupleScanManager(int depth) : max_loop_depth(depth) {
         scan_result.resize(max_loop_depth + 1);
     };
     /**
@@ -116,8 +117,8 @@ private:
  */
 class TupleDataAnalyzer {
 public:
-    TupleDataAnalyzer(std::ostream& os=std::cout);
-    TupleDataAnalyzer(const std::string& output_path);
+    explicit TupleDataAnalyzer(souffle::SymbolTable* symbolTable,std::ostream& os=std::cout);
+    TupleDataAnalyzer(const std::string& output_path,souffle::SymbolTable* symbolTable);
     ~TupleDataAnalyzer();
     /**
      * @brief 从输入流中读取一行，并进行解读
@@ -132,15 +133,15 @@ private:
     std::string decodeTupleWithAssignedData(std::string tuple);
     std::string decodeTupleWithAssignedData(std::vector<size_t>& tuple);
     void decodeTupleByOrder(std::vector<size_t>& tuple, std::vector<size_t>& order);
-    std::string curr_insertSet = "";
-    std::string curr_scanSet ="";
+    std::string curr_insertSet;
+    std::string curr_scanSet;
     std::ostream* os;
-    std::vector<std::string> assign_data;
     std::vector<std::size_t> curr_order;
     std::stringstream tuple_data;
     set_data set;
     TupleScanManager* scan_manager = nullptr;
     InfoOrderManager* order_manager = nullptr;
+    souffle::SymbolTable* symbolTable;
     bool is_relation = false;
     bool is_skip_loop =false;
 };
