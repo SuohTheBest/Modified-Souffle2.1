@@ -40,7 +40,9 @@ int main() {
 	// 最终correct.tuple_list留下来的是缺失的元组
 	std::cout << "P = " << p << "\tF = " << f << std::endl;
 	for (RelationCount &relation: wrong.relation_list) {
-		std::cout << relation.name << "\t Pr = " << relation.pr << "\t Fr = " << relation.fr << std::endl;
+		double op_val = relation.fr - relation.pr / (p + 1.0);
+		std::cout << relation.name << "\t Pr = " << relation.pr << "\t Fr = " << relation.fr << "\t Op = " << op_val
+				  << std::endl;
 	}
 	return 0;
 }
