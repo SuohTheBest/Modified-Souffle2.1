@@ -68,7 +68,7 @@ RamDomain evalExpression(Own<Expression> expression) {
     TranslationUnit translationUnit(std::move(prog), errReport, debugReport);
 
     // configure and execute interpreter
-    Own<Engine> interpreter = mk<Engine>(translationUnit);
+    Own<Engine> interpreter = mk<Engine>(translationUnit,"./test");
 
     std::string name("test");
     std::vector<RamDomain> ret;
