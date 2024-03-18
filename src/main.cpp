@@ -407,7 +407,16 @@ int main(int argc, char** argv) {
     if (Global::config().has("swig") && !Global::config().has("generate")) {
         Global::config().set("generate", simpleName(Global::config().get("")));
     }
-    if (!existDir("./souffle-analyze-data")) std::filesystem::create_directory("./souffle-analyze-data");
+    char cwd[1024];
+    if (getcwd(cwd, sizeof(cwd)) != nullptr) {
+        std::cout << "Current working directory: " << cwd << std::endl;
+    } else {
+        std::cerr << "Error getting current working directory" << std::endl;
+    }
+    if (!existDir("./souffle-analyze-data")) {
+        std::filesystem::create_directory("./souffle-analyze-data");
+        std::cout << "created dir" << std::endl;
+    }
     // ------ start souffle -------------
 
     std::string souffleExecutable = which(argv[0]);
@@ -663,7 +672,7 @@ int main(int argc, char** argv) {
             // configure and execute interpreter
             Own<interpreter::Engine> interpreter(mk<interpreter::Engine>(*ramTranslationUnit,
                     "./souffle-analyze-data/output_" + std::to_string(modified_souffle::countFilesInDirectory(
-                                                            "./souffle-analyze-data/"))));
+                                                               "./souffle-analyze-data/"))));
             interpreter->executeMain();
             // If the profiler was started, join back here once it exits.
             if (profiler.joinable()) {
