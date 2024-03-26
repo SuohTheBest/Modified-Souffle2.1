@@ -651,7 +651,7 @@ int main(int argc, char** argv) {
     if (ramTranslationUnit->getErrorReport().getNumIssues() != 0) {
         std::cerr << ramTranslationUnit->getErrorReport();
     }
-    std::cout << ramTranslationUnit->getProgram();
+    // std::cout << ramTranslationUnit->getProgram();
     // Output the transformed RAM program and return
     if (Global::config().get("show") == "transformed-ram") {
         std::cout << ramTranslationUnit->getProgram();

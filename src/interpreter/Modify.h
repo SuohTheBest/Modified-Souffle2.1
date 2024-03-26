@@ -5,11 +5,11 @@
 #pragma once
 #include "cassert"
 #include "iostream"
+#include "souffle/SymbolTable.h"
 #include "sstream"
 #include "string"
 #include "vector"
 #include <map>
-#include "souffle/SymbolTable.h"
 
 namespace modified_souffle {
 
@@ -30,7 +30,7 @@ public:
      * @param target_set 目标集合
      * @brief 将源集合合并至目标集合中
      */
-    void merge_set(const std::string& source_set,const std::string& target_set);
+    void merge_set(const std::string& source_set, const std::string& target_set);
     /**
      * @brief 展示集合的变化
      */
@@ -117,8 +117,8 @@ private:
  */
 class TupleDataAnalyzer {
 public:
-    explicit TupleDataAnalyzer(souffle::SymbolTable* symbolTable,std::ostream& os=std::cout);
-    TupleDataAnalyzer(const std::string& output_path,souffle::SymbolTable* symbolTable);
+    explicit TupleDataAnalyzer(souffle::SymbolTable* symbolTable, std::ostream& os = std::cout);
+    TupleDataAnalyzer(const std::string& output_path, souffle::SymbolTable* symbolTable);
     ~TupleDataAnalyzer();
     /**
      * @brief 从输入流中读取一行，并进行解读
@@ -143,7 +143,7 @@ private:
     InfoOrderManager* order_manager = nullptr;
     souffle::SymbolTable* symbolTable;
     bool is_relation = false;
-    bool is_skip_loop =false;
+    bool is_skip_loop = false;
 };
 
 }  // namespace modified_souffle

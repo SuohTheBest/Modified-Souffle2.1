@@ -77,7 +77,7 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
     std::string line;
     if (!std::getline(tuple_data, line)) return false;
     // (*os) << "###" << line << std::endl;
-    std::cout<<line<<std::endl;
+    //std::cout << line << std::endl;
     size_t split_pos = line.find(' ');
     std::string operation = line.substr(0, split_pos);
     std::string data(line.begin() + split_pos + 1, line.end() - 1);
@@ -99,6 +99,7 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
                 (*os) << "apply rules:" << data << std::endl;
             } else
                 (*os) << "read input:" << data << std::endl;
+            os->flush();
             break;
         }
         case opType::insert_target: {
@@ -183,6 +184,7 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
         }
         case opType::output: {
             (*os) << "output set:" << data << std::endl;
+            os->flush();
             break;
         }
         default: break;
@@ -225,8 +227,8 @@ modified_souffle::TupleDataAnalyzer& modified_souffle::TupleDataAnalyzer::operat
 }
 
 modified_souffle::TupleDataAnalyzer::~TupleDataAnalyzer() {
-    while (parse())
-        (*os) << "case 2" << std::endl;
+    while (parse());
+    os->flush();
 }
 
 void modified_souffle::TupleDataAnalyzer::decodeTupleByOrder(
@@ -292,6 +294,7 @@ void modified_souffle::set_data::show(std::ostream& os) {
         os << std::endl;
     }
     os << std::endl;
+    os << std::flush;
 }
 
 void modified_souffle::set_data::clear() {
