@@ -41,10 +41,11 @@ protected:
 
 public:
     template <typename T>
-    void readAll(T& relation) {
+    void readAll(T& relation, modified_souffle::TupleDataAnalyzer* analyzer) {
         while (const auto next = readNextTuple()) {
             const RamDomain* ramDomain = next.get();
             relation.insert(ramDomain);
+            analyzer->insert_from_file(relation.getArity(),ramDomain);
         }
     }
 

@@ -169,14 +169,14 @@ std::size_t number_of_threads(const std::size_t) {
 
 }  // namespace
 
-Engine::Engine(ram::TranslationUnit& tUnit, const std::string& analyzer_output_path)
+Engine::Engine(ram::TranslationUnit& tUnit, const std::string& analyzer_output_path, bool is_debug)
         : profileEnabled(Global::config().has("profile")),
           frequencyCounterEnabled(Global::config().has("profile-frequency")),
           isProvenance(Global::config().has("provenance")),
           numOfThreads(number_of_threads(std::stoi(Global::config().get("jobs")))), tUnit(tUnit),
           isa(tUnit.getAnalysis<ram::analysis::IndexAnalysis>()), recordTable(numOfThreads),
           symbolTable(numOfThreads) {
-    this->analyzer = new modified_souffle::TupleDataAnalyzer(analyzer_output_path,&symbolTable);
+    this->analyzer = new modified_souffle::TupleDataAnalyzer(analyzer_output_path, &symbolTable, is_debug);
 }
 
 Engine::RelationHandle& Engine::getRelationHandle(const std::size_t idx) {
@@ -449,7 +449,7 @@ RamDomain Engine::execute(const Node* node, Context& ctxt) {
         ESAC(AutoIncrement)
 
         CASE(IntrinsicOperator)
-// clang-format off
+        // clang-format off
 #define BINARY_OP_TYPED(ty, op) return ramBitCast(static_cast<ty>(EVAL_CHILD(ty, 0) op EVAL_CHILD(ty, 1)))
 
 #define BINARY_OP_LOGICAL(opcode, op) BINARY_OP_INTEGRAL(opcode, op)
@@ -1217,16 +1217,19 @@ RamDomain Engine::execute(const Node* node, Context& ctxt) {
 
             if (op == "input") {
                 try {
+                    (*analyzer) << "INSERT_TARGET" << rel.getName() << std::endl;
+                    analyzer->parse();
+                    std::cout << "starting input from file...." << std::endl;
                     IOSystem::getInstance()
                             .getReader(directive, getSymbolTable(), getRecordTable())
-                            ->readAll(rel);
+                            ->readAll(rel, analyzer);
                 } catch (std::exception& e) {
                     std::cerr << "Error loading data: " << e.what() << "\n";
                 }
                 return true;
             } else if (op == "output" || op == "printsize") {
                 try {
-                    (*analyzer)<<"OUTPUT"<<rel.getName();
+                    (*analyzer) << "OUTPUT" << rel.getName() << std::endl;
                     analyzer->parse();
                     IOSystem::getInstance()
                             .getWriter(directive, getSymbolTable(), getRecordTable())
@@ -1329,7 +1332,15 @@ RamDomain Engine::evalExistenceCheck(const ExistenceCheck& shadow, Context& ctxt
         for (const auto& expr : superInfo.exprFirst) {
             tuple[expr.first] = execute(expr.second.get(), ctxt);
         }
-        return Rel::castView(ctxt.getView(viewPos))->contains(tuple);
+        bool ans = Rel::castView(ctxt.getView(viewPos))->contains(tuple);
+        if (ans) {
+            (*analyzer) << "EXIST_TARGET" << shadow.getRelationName() << std::endl;
+            analyzer->parse();
+            (*analyzer) << "SCAN_INDEX" << shadow.getViewId() << modified_souffle::tupleToString(tuple)
+                        << std::endl;
+            analyzer->parse();
+        }
+        return ans;
     }
 
     // for partial we search for lower and upper boundaries

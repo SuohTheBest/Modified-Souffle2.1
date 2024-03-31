@@ -10,6 +10,7 @@
 #include "string"
 #include "vector"
 #include <map>
+#include <thread>
 
 namespace modified_souffle {
 
@@ -55,13 +56,25 @@ class TupleScanManager {
 public:
     explicit TupleScanManager(int depth) : max_loop_depth(depth) {
         scan_result.resize(max_loop_depth + 1);
+        scan_flags.resize(max_loop_depth + 1);
     };
     /**
-     * @brief 进入下一级循环
+     * @brief 进入下一级循环，并设置flag(0 = normal,1 = check_existence)
      */
-    void enter_loop() {
+    void enter_loop(uint8_t flag) {
+        scan_flags[curr_loop_index] = flag;
         curr_loop_index += 1;
         assert(curr_loop_index <= max_loop_depth);
+    }
+    /**
+     * @brief 在insert完毕后使用，返回flag = 0的循环
+     */
+    void back_to_normal_scan() {
+        int i = curr_loop_index - 1;
+        for (; i >= 0; i--) {
+            if (scan_flags[i] == 0) break;
+        }
+        curr_loop_index = i + 1;
     }
     /**
      * @brief 结束当前循环，返回上一级循环
@@ -83,6 +96,7 @@ public:
 
 private:
     std::vector<std::string> scan_result;
+    std::vector<uint8_t> scan_flags;
     size_t curr_loop_index = 0;
     size_t max_loop_depth;
 };
@@ -117,14 +131,15 @@ private:
  */
 class TupleDataAnalyzer {
 public:
-    explicit TupleDataAnalyzer(souffle::SymbolTable* symbolTable, std::ostream& os = std::cout);
-    TupleDataAnalyzer(const std::string& output_path, souffle::SymbolTable* symbolTable);
+    TupleDataAnalyzer(
+            const std::string& output_path, souffle::SymbolTable* symbolTable, bool is_debug = false);
     ~TupleDataAnalyzer();
     /**
      * @brief 从输入流中读取一行，并进行解读
      * @return 是否成功读取数据
      */
     bool parse();
+    void insert_from_file(int size, const int32_t* data);
     TupleDataAnalyzer& operator<<(const std::string& s);
     TupleDataAnalyzer& operator<<(std::ostream& (*manipulator)(std::ostream&));
     TupleDataAnalyzer& operator<<(const int& s);
@@ -141,9 +156,12 @@ private:
     set_data set;
     TupleScanManager* scan_manager = nullptr;
     InfoOrderManager* order_manager = nullptr;
-    souffle::SymbolTable* symbolTable;
+    souffle::SymbolTable* symbolTable = nullptr;
+    std::thread* worker = nullptr;
+    std::atomic<bool> running = true;
     bool is_relation = false;
     bool is_skip_loop = false;
+    bool is_debug = false;
 };
 
 }  // namespace modified_souffle

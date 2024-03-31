@@ -275,6 +275,7 @@ int main(int argc, char** argv) {
                         "[ parse-errors | precedence-graph | scc-graph | transformed-datalog | "
                         "transformed-ram | type-analysis ]",
                         "", false, "Print selected program information."},
+                {"mdebug-output", 'O', "", "", false, "Show modified souffle output."},
                 {"parse-errors", '\5', "", "", false, "Show parsing errors, if any, then exit."},
                 {"help", 'h', "", "", false, "Display this help message."},
                 {"legacy", '\6', "", "", false, "Enable legacy support."}};
@@ -651,7 +652,9 @@ int main(int argc, char** argv) {
     if (ramTranslationUnit->getErrorReport().getNumIssues() != 0) {
         std::cerr << ramTranslationUnit->getErrorReport();
     }
-    // std::cout << ramTranslationUnit->getProgram();
+    if(Global::config().has("mdebug_output")) {
+        std::cout << ramTranslationUnit->getProgram();
+    }
     // Output the transformed RAM program and return
     if (Global::config().get("show") == "transformed-ram") {
         std::cout << ramTranslationUnit->getProgram();

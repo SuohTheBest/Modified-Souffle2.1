@@ -1,6 +1,8 @@
 #include "Modify.h"
 #include "fstream"
-
+#include "thread"
+#include <iomanip>
+#define PROCESS(_) std::cout << "Modified Souffle: " << _ << "\r" << std::flush;
 enum class opType {
     debug,
     insert_target,
@@ -15,6 +17,7 @@ enum class opType {
     end_scan,
     output,
     other,
+    exist_target,
 };
 
 int countSubstringOccurrences(const std::string& str, const std::string& sub) {
@@ -25,6 +28,33 @@ int countSubstringOccurrences(const std::string& str, const std::string& sub) {
         pos += sub.length();
     }
     return count;
+}
+
+void displayRunningTime(std::atomic<bool>& running) {
+    using namespace std::chrono;
+    struct tm {
+        uint16_t sec;
+        uint16_t min;
+        tm() : sec(0), min(0) {}
+        tm& operator++() {
+            sec++;
+            if (sec >= 60) {
+                sec -= 60;
+                min++;
+            }
+            return *this;
+        }
+        void display() {
+            printf("%0*d:%0*d", 2, min, 2, sec);
+        }
+    };
+    tm curr_time;
+    while (running) {
+        printf("\r\033[k");
+        curr_time.display();
+        ++curr_time;
+        std::this_thread::sleep_for(milliseconds(1000));
+    }
 }
 
 std::vector<size_t> stringToTuple(const std::string& str) {
@@ -69,6 +99,8 @@ opType getOperationType(const std::string& operation) {
         return opType::end_scan;
     else if (operation == "OUTPUT")
         return opType::output;
+    else if (operation == "EXIST_TARGET")
+        return opType::exist_target;
     else
         return opType::other;
 }
@@ -77,7 +109,7 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
     std::string line;
     if (!std::getline(tuple_data, line)) return false;
     // (*os) << "###" << line << std::endl;
-    //std::cout << line << std::endl;
+    if (is_debug) PROCESS(line)
     size_t split_pos = line.find(' ');
     std::string operation = line.substr(0, split_pos);
     std::string data(line.begin() + split_pos + 1, line.end() - 1);
@@ -122,6 +154,7 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
                     set.insert_tuple(curr_insertSet, decodeTupleWithAssignedData(tuple), detail);
             } else
                 set.insert_tuple(curr_insertSet, decodeTupleWithAssignedData(tuple), "");
+            scan_manager->back_to_normal_scan();
             break;
         }
         case opType::swap: {
@@ -164,7 +197,12 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
             break;
         }
         case opType::scan_target: {
-            scan_manager->enter_loop();
+            scan_manager->enter_loop(0);
+            curr_scanSet = data;
+            break;
+        }
+        case opType::exist_target: {
+            scan_manager->enter_loop(1);
             curr_scanSet = data;
             break;
         }
@@ -185,6 +223,10 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
         case opType::output: {
             (*os) << "output set:" << data << std::endl;
             os->flush();
+            if (set.counter != 0) {
+                set.show(*os);
+                set.clear();
+            }
             break;
         }
         default: break;
@@ -227,8 +269,12 @@ modified_souffle::TupleDataAnalyzer& modified_souffle::TupleDataAnalyzer::operat
 }
 
 modified_souffle::TupleDataAnalyzer::~TupleDataAnalyzer() {
-    while (parse());
+    while (parse())
+        ;
     os->flush();
+    running = false;
+    printf("closing...");
+    if (worker != nullptr) worker->join();
 }
 
 void modified_souffle::TupleDataAnalyzer::decodeTupleByOrder(
@@ -251,18 +297,27 @@ std::string modified_souffle::TupleDataAnalyzer::decodeTupleWithAssignedData(std
     return ans;
 }
 
-modified_souffle::TupleDataAnalyzer::TupleDataAnalyzer(souffle::SymbolTable* symbolTable, std::ostream& os) {
-    this->os = &os;
-    this->symbolTable = symbolTable;
-}
-
 modified_souffle::TupleDataAnalyzer::TupleDataAnalyzer(
-        const std::string& output_path, souffle::SymbolTable* symbolTable) {
+        const std::string& output_path, souffle::SymbolTable* symbolTable, bool is_debug) {
     this->symbolTable = symbolTable;
     if (output_path.empty())
         this->os = &std::cout;
     else
         this->os = new std::ofstream(output_path);
+    this->is_debug = is_debug;
+
+    if (!is_debug) {
+        this->worker = new std::thread(displayRunningTime, std::ref(running));
+    }
+}
+
+void modified_souffle::TupleDataAnalyzer::insert_from_file(int size, const int32_t* data) {
+    assert(!curr_insertSet.empty());
+    std::vector<size_t> tuple;
+    for (int i = 0; i < size; ++i) {
+        tuple.push_back(data[i]);
+    }
+    set.insert_tuple(curr_insertSet, decodeTupleWithAssignedData(tuple), "");
 }
 
 void modified_souffle::set_data::insert_tuple(
@@ -270,8 +325,13 @@ void modified_souffle::set_data::insert_tuple(
     auto it = set_index.find(target_set);
     if (it != set_index.end()) {
         size_t index = it->second;
-        set[index].push_back(tuple);
-        detail_data[index].push_back(detail);
+        try {
+            set[index].push_back(tuple);
+            if (!detail.empty()) detail_data[index].push_back(detail);
+        } catch (const std::bad_alloc& e) {
+            throw std::runtime_error("push_back操作无效。原因：std::bad_alloc");
+        }
+
     } else {
         set_index[target_set] = counter;
         if (counter >= set.size()) {
@@ -279,7 +339,7 @@ void modified_souffle::set_data::insert_tuple(
             detail_data.resize(2 * counter + 1);
         }
         set[counter].push_back(tuple);
-        detail_data[counter].push_back(detail);
+        if (!detail.empty()) detail_data[counter].push_back(detail);
         counter++;
     }
 }
@@ -289,7 +349,10 @@ void modified_souffle::set_data::show(std::ostream& os) {
         if (i.first[0] == '@') continue;
         os << i.first << ":" << std::endl;
         for (size_t j = 0; j < set[i.second].size(); ++j) {
-            os << "+" << set[i.second][j] << " " << detail_data[i.second][j] << " " << std::endl;
+            os << "+" << set[i.second][j] << " ";
+            if (!detail_data[i.second].empty()) os << detail_data[i.second][j] << " ";
+            os << std::endl;
+            os << std::flush;
         }
         os << std::endl;
     }

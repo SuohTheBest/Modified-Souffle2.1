@@ -17,10 +17,10 @@
 #pragma once
 
 #include "Global.h"
-#include "interpreter/Modify.h"
 #include "interpreter/Context.h"
 #include "interpreter/Generator.h"
 #include "interpreter/Index.h"
+#include "interpreter/Modify.h"
 #include "interpreter/Node.h"
 #include "interpreter/Relation.h"
 #include "ram/TranslationUnit.h"
@@ -54,7 +54,7 @@ class Engine {
     friend NodeGenerator;
 
 public:
-    Engine(ram::TranslationUnit& tUnit, const std::string& analyzer_output_path);
+    Engine(ram::TranslationUnit& tUnit, const std::string& analyzer_output_path, bool is_debug = false);
 
     /** @brief Execute the main program */
     void executeMain();
