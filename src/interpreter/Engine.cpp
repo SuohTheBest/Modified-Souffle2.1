@@ -92,6 +92,7 @@
 #include "souffle/utility/MiscUtil.h"
 #include "souffle/utility/ParallelUtil.h"
 #include "souffle/utility/StringUtil.h"
+#include "souffle/Modify.h"
 #include <algorithm>
 #include <array>
 #include <atomic>
@@ -169,6 +170,8 @@ std::size_t number_of_threads(const std::size_t) {
 
 }  // namespace
 
+using namespace modified_souffle;
+
 Engine::Engine(ram::TranslationUnit& tUnit, const std::string& analyzer_output_path, bool is_debug)
         : profileEnabled(Global::config().has("profile")),
           frequencyCounterEnabled(Global::config().has("profile-frequency")),
@@ -176,7 +179,7 @@ Engine::Engine(ram::TranslationUnit& tUnit, const std::string& analyzer_output_p
           numOfThreads(number_of_threads(std::stoi(Global::config().get("jobs")))), tUnit(tUnit),
           isa(tUnit.getAnalysis<ram::analysis::IndexAnalysis>()), recordTable(numOfThreads),
           symbolTable(numOfThreads) {
-    this->analyzer = new modified_souffle::TupleDataAnalyzer(analyzer_output_path, &symbolTable, is_debug);
+                analyzer  = new modified_souffle::TupleDataAnalyzer(analyzer_output_path, &symbolTable, is_debug);
 }
 
 Engine::RelationHandle& Engine::getRelationHandle(const std::size_t idx) {
@@ -1222,7 +1225,7 @@ RamDomain Engine::execute(const Node* node, Context& ctxt) {
                     std::cout << "starting input from file...." << std::endl;
                     IOSystem::getInstance()
                             .getReader(directive, getSymbolTable(), getRecordTable())
-                            ->readAll(rel, analyzer);
+                            ->readAll(rel);
                 } catch (std::exception& e) {
                     std::cerr << "Error loading data: " << e.what() << "\n";
                 }

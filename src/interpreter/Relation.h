@@ -141,7 +141,6 @@ public:
      */
     virtual IndexViewPtr createView(const std::size_t&) const = 0;
 
-protected:
     std::string relName;
 
     arity_type arity;

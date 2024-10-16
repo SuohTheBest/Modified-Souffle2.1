@@ -54,7 +54,7 @@ else()
     endif()
 endif()
 
-project(souffle VERSION "${SOUFFLE_VERSION}"
+project(souffle VERSION "2.1.0"
                 DESCRIPTION "A datalog compiler"
                 LANGUAGES CXX)
 include(CTest)

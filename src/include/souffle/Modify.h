@@ -164,4 +164,8 @@ private:
     bool is_debug = false;
 };
 
+extern TupleDataAnalyzer *analyzer;
+
 }  // namespace modified_souffle
+
+

@@ -1,4 +1,4 @@
-#include "Modify.h"
+#include "souffle/Modify.h"
 #include "fstream"
 #include "thread"
 #include <iomanip>
@@ -105,7 +105,10 @@ opType getOperationType(const std::string& operation) {
         return opType::other;
 }
 
-bool modified_souffle::TupleDataAnalyzer::parse() {
+namespace modified_souffle {
+TupleDataAnalyzer* analyzer = nullptr;
+
+bool TupleDataAnalyzer::parse() {
     std::string line;
     if (!std::getline(tuple_data, line)) return false;
     // (*os) << "###" << line << std::endl;
@@ -234,7 +237,7 @@ bool modified_souffle::TupleDataAnalyzer::parse() {
     return true;
 }
 
-std::string modified_souffle::TupleDataAnalyzer::decodeTupleWithAssignedData(const std::string tuple) {
+std::string TupleDataAnalyzer::decodeTupleWithAssignedData(const std::string tuple) {
     std::stringstream ss(tuple.substr(1, tuple.size() - 1));
     std::string token;
     std::string ans = "(";
@@ -252,23 +255,23 @@ std::string modified_souffle::TupleDataAnalyzer::decodeTupleWithAssignedData(con
     return ans;
 }
 
-modified_souffle::TupleDataAnalyzer& modified_souffle::TupleDataAnalyzer::operator<<(const std::string& s) {
+TupleDataAnalyzer& modified_souffle::TupleDataAnalyzer::operator<<(const std::string& s) {
     tuple_data << s << ' ';
     return *this;
 }
 
-modified_souffle::TupleDataAnalyzer& modified_souffle::TupleDataAnalyzer::operator<<(const int& s) {
+TupleDataAnalyzer& modified_souffle::TupleDataAnalyzer::operator<<(const int& s) {
     tuple_data << s << ' ';
     return *this;
 }
 
-modified_souffle::TupleDataAnalyzer& modified_souffle::TupleDataAnalyzer::operator<<(
+TupleDataAnalyzer& modified_souffle::TupleDataAnalyzer::operator<<(
         std::ostream& (*manipulator)(std::ostream&)) {
     tuple_data << manipulator;
     return *this;
 }
 
-modified_souffle::TupleDataAnalyzer::~TupleDataAnalyzer() {
+TupleDataAnalyzer::~TupleDataAnalyzer() {
     while (parse())
         ;
     os->flush();
@@ -277,8 +280,7 @@ modified_souffle::TupleDataAnalyzer::~TupleDataAnalyzer() {
     if (worker != nullptr) worker->join();
 }
 
-void modified_souffle::TupleDataAnalyzer::decodeTupleByOrder(
-        std::vector<size_t>& tuple, std::vector<size_t>& order) {
+void TupleDataAnalyzer::decodeTupleByOrder(std::vector<size_t>& tuple, std::vector<size_t>& order) {
     assert(tuple.size() == order.size() && tuple.size() != 0);
     std::vector<size_t> temp;
     temp.resize(tuple.size());
@@ -288,7 +290,7 @@ void modified_souffle::TupleDataAnalyzer::decodeTupleByOrder(
     std::swap(temp, tuple);
 }
 
-std::string modified_souffle::TupleDataAnalyzer::decodeTupleWithAssignedData(std::vector<size_t>& tuple) {
+std::string TupleDataAnalyzer::decodeTupleWithAssignedData(std::vector<size_t>& tuple) {
     std::string ans = "(";
     for (unsigned long i : tuple) {
         ans = ans + symbolTable->decode(i) + ",";
@@ -297,7 +299,7 @@ std::string modified_souffle::TupleDataAnalyzer::decodeTupleWithAssignedData(std
     return ans;
 }
 
-modified_souffle::TupleDataAnalyzer::TupleDataAnalyzer(
+TupleDataAnalyzer::TupleDataAnalyzer(
         const std::string& output_path, souffle::SymbolTable* symbolTable, bool is_debug) {
     this->symbolTable = symbolTable;
     if (output_path.empty())
@@ -311,7 +313,7 @@ modified_souffle::TupleDataAnalyzer::TupleDataAnalyzer(
     }
 }
 
-void modified_souffle::TupleDataAnalyzer::insert_from_file(int size, const int32_t* data) {
+void TupleDataAnalyzer::insert_from_file(int size, const int* data) {
     assert(!curr_insertSet.empty());
     std::vector<size_t> tuple;
     for (int i = 0; i < size; ++i) {
@@ -320,7 +322,7 @@ void modified_souffle::TupleDataAnalyzer::insert_from_file(int size, const int32
     set.insert_tuple(curr_insertSet, decodeTupleWithAssignedData(tuple), "");
 }
 
-void modified_souffle::set_data::insert_tuple(
+void set_data::insert_tuple(
         const std::string& target_set, const std::string& tuple, const std::string& detail) {
     auto it = set_index.find(target_set);
     if (it != set_index.end()) {
@@ -344,7 +346,7 @@ void modified_souffle::set_data::insert_tuple(
     }
 }
 
-void modified_souffle::set_data::show(std::ostream& os) {
+void set_data::show(std::ostream& os) {
     for (auto& i : set_index) {
         if (i.first[0] == '@') continue;
         os << i.first << ":" << std::endl;
@@ -360,7 +362,7 @@ void modified_souffle::set_data::show(std::ostream& os) {
     os << std::flush;
 }
 
-void modified_souffle::set_data::clear() {
+void set_data::clear() {
     set_index.clear();
     for (auto& i : set) {
         i.clear();
@@ -373,7 +375,7 @@ void modified_souffle::set_data::clear() {
     counter = 0;
 }
 
-void modified_souffle::set_data::merge_set(const std::string& source_set, const std::string& target_set) {
+void set_data::merge_set(const std::string& source_set, const std::string& target_set) {
     auto it_src = set_index.find(source_set);
     assert(it_src != set_index.end());
     auto it_dst = set_index.find(target_set);
@@ -392,7 +394,7 @@ void modified_souffle::set_data::merge_set(const std::string& source_set, const 
     }
 }
 
-std::string modified_souffle::TupleScanManager::read_tuple() {
+std::string TupleScanManager::read_tuple() {
     if (curr_loop_index == max_loop_depth) {
         std::string s = " from:[";
         for (size_t i = 1; i < scan_result.size(); ++i) {
@@ -404,15 +406,15 @@ std::string modified_souffle::TupleScanManager::read_tuple() {
         return "_";
 }
 
-void modified_souffle::TupleScanManager::scan_tuple(const std::string& tuple) {
+void TupleScanManager::scan_tuple(const std::string& tuple) {
     scan_result[curr_loop_index] = tuple;
 }
 
-void modified_souffle::InfoOrderManager::add_order(size_t viewId, std::vector<size_t>& order) {
+void InfoOrderManager::add_order(size_t viewId, std::vector<size_t>& order) {
     order_map[viewId] = order;
 }
 
-std::vector<size_t>& modified_souffle::InfoOrderManager::get_order(size_t viewId) {
+std::vector<size_t>& InfoOrderManager::get_order(size_t viewId) {
     auto it = order_map.find(viewId);
     if (it != order_map.end()) {
         return it->second;
@@ -421,3 +423,4 @@ std::vector<size_t>& modified_souffle::InfoOrderManager::get_order(size_t viewId
         throw std::runtime_error("view id invalid.");
     }
 }
+}  // namespace modified_souffle

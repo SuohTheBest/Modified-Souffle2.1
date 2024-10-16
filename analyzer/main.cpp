@@ -15,8 +15,8 @@ int main() {
 	size_t p = 0;
 	size_t f = 0;
 	correctTupleExtractor correct(
-			R"(D:\souffle-2.1\souffle-2.1\cmake-build-debug-wsl\src\souffle-analyze-data\output_0)");
-	proofTreeBuilder wrong(R"(D:\souffle-2.1\souffle-2.1\cmake-build-debug-wsl\src\souffle-analyze-data\output_1)");
+			R"(D:\souffle-2.1\souffle-2.1\souffle-analyze-data\output_0)");
+	proofTreeBuilder wrong(R"(D:\souffle-2.1\souffle-2.1\souffle-analyze-data\output_1)");
 	for (Tuple *tuple: wrong.tuple_list) {
 		// tuple是根节点，无需进行统计
 		if (tuple->is_root) continue;

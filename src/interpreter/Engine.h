@@ -20,11 +20,11 @@
 #include "interpreter/Context.h"
 #include "interpreter/Generator.h"
 #include "interpreter/Index.h"
-#include "interpreter/Modify.h"
 #include "interpreter/Node.h"
 #include "interpreter/Relation.h"
 #include "ram/TranslationUnit.h"
 #include "ram/analysis/Index.h"
+#include "souffle/Modify.h"
 #include "souffle/RamTypes.h"
 #include "souffle/RecordTable.h"
 #include "souffle/SymbolTable.h"
@@ -185,8 +185,6 @@ private:
     VecOwn<RelationHandle> relations;
     /** Symbol table */
     SymbolTable symbolTable;
-    /** Modify */
-    modified_souffle::TupleDataAnalyzer* analyzer;
 };
 
 }  // namespace souffle::interpreter

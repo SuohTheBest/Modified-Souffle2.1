@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include "souffle/Modify.h"
 #include "souffle/RamTypes.h"
 #include "souffle/RecordTable.h"
 #include "souffle/SymbolTable.h"
@@ -40,12 +41,22 @@ protected:
             : SerialisationStream(symTab, recTab, rwOperation) {}
 
 public:
+    template <typename T, typename = void>
+    struct has_arity : std::false_type {};
+
     template <typename T>
-    void readAll(T& relation, modified_souffle::TupleDataAnalyzer* analyzer) {
+    struct has_arity<T, std::void_t<decltype(std::declval<T>().arity)>> : std::true_type {};
+
+    template <typename T>
+    void readAll(T& relation) {
         while (const auto next = readNextTuple()) {
             const RamDomain* ramDomain = next.get();
             relation.insert(ramDomain);
-            analyzer->insert_from_file(relation.getArity(),ramDomain);
+            if constexpr (has_arity<T>::value) {
+                modified_souffle::analyzer->insert_from_file(relation.arity, ramDomain);
+            } else {
+                modified_souffle::analyzer->insert_from_file(T::Arity, ramDomain); // 访问静态成员 Arity
+            }
         }
     }
 
